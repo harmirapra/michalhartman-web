@@ -1,0 +1,65 @@
+# Průvodce projektem
+
+## Co je tento projekt
+
+Osobní web Michala Hartmana — replika `michalhartman.com` postavená v Astru.
+Běží na Railway, produkce je `https://new.michalhartman.com`. Vzniká jako
+cvičení CI/CD pipeline; původní web na WordPressu běží dál nezávisle.
+
+**Před každým vizuálním výstupem si přečti `DESIGN.md` a řiď se jím.**
+
+## Setup
+
+```bash
+npm ci                 # instalace závislostí
+cp .env.example .env   # zatím prázdné, Etapa 1 žádné proměnné nepotřebuje
+```
+
+## Spuštění a testy
+
+```bash
+npm run dev           # vývojový server, http://localhost:4321
+npm run build         # sestavení do dist/
+npm start             # servírování sestavené verze (jako na produkci)
+npm run check:links   # kontrola, že žádný odkaz nevede do prázdna
+```
+
+## Deploy
+
+Nasazuje se na Railway ze složky `dist/`.
+
+- **Produkce:** merge pull requestu do `main` → automatické nasazení na `new.michalhartman.com`
+- **Náhled:** každý otevřený pull request dostane vlastní dočasnou URL
+- **Logy:** Railway dashboard → služba → Deployments (build log) a Logs (runtime log)
+- **Cesta zpět:** viz sekce níže
+
+## Environment variables
+
+Etapa 1 žádné nepotřebuje. Zdroj pravdy pro seznam je `.env.example`.
+
+## Co agent nesmí
+
+- číst ani commitovat `.env` a jiné soubory s klíči,
+- `git push --force` a jiné destruktivní kroky bez výslovného potvrzení,
+- pushovat přímo do `main` — vždy přes branch a pull request,
+- zasahovat do produkčního WordPressu na `michalhartman.com`.
+
+## Bezpečný postup změny
+
+```
+pull → branch → změna → diff → commit → push → pull request
+     → zelená kontrola + náhled → merge → produkce
+```
+
+## Quality gate
+
+Před mergem musí platit všechno:
+
+- [ ] `npm run build` proběhne bez chyby,
+- [ ] `npm run check:links` nenajde rozbitý odkaz,
+- [ ] náhledová URL je otevřená a zkontrolovaná člověkem,
+- [ ] u vizuálních změn: screenshot porovnaný s `DESIGN.md`.
+
+## Když měníš setup, build nebo deploy
+
+Aktualizuj tenhle soubor. Zastaralé instrukce jsou horší než žádné.

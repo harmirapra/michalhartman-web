@@ -1,0 +1,23 @@
+{
+  "name": "michalhartman-web",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "start": "serve dist -l ${PORT:-4321}",
+    "check:links": "linkinator ./dist --recurse"
+  },
+  "dependencies": {
+    "astro": "^7.1.6",
+    "serve": "^14.2.6"
+  },
+  "devDependencies": {
+    "linkinator": "^8.0.3"
+  }
+}
