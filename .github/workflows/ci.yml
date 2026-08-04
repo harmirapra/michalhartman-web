@@ -1,0 +1,29 @@
+name: Kontrola
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  kontrola:
+    name: kontrola
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stáhnout kód
+        uses: actions/checkout@v7
+
+      - name: Připravit Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Nainstalovat závislosti
+        run: npm ci
+
+      - name: Sestavit web
+        run: npm run build
+
+      - name: Zkontrolovat odkazy
+        run: npm run check:links
