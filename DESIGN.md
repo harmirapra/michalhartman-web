@@ -51,27 +51,44 @@ zápisem hex kódu přímo v komponentě.
 
 ## 4. Typografie
 
-**Jediná rodina: Inter.** Živý web sice načítá i Poppins, Roboto a Epilogue, ale
-všechny globální typografické styly Elementoru používají výhradně Inter — ostatní
-rodiny tahají pluginy a v designu se neprojevují. Replika je proto nenačítá.
+**Jediná rodina: Poppins.** Nadpisy jsou záměrně velmi světlé (tloušťka 200),
+text světlý (300). Odtud pochází vzdušný, nehutný dojem celého webu — je to
+nejvýraznější rys typografie a nesmí se ztratit.
 
-Záložní řetěz: `Inter, system-ui, -apple-system, sans-serif`.
+Záložní řetěz: `Poppins, system-ui, -apple-system, sans-serif`.
 
-| Styl | Tloušťka | Velikost (desktop / ≤1024 / ≤767) | Řádkování | Prostrkání | Kdy použít |
+| Styl | Tloušťka | Velikost (desktop / ≤1024) | Řádkování | Prostrkání | Kdy použít |
 |---|---|---|---|---|---|
-| Nadpis | 600 | 38 / 30 / 22 px | 1.2 | −0.5 px | `h1`, `h2` — název stránky, sekce |
-| Podnadpis | 400 | 22 / 18 / 16 px | 1.2 | −0.5 px | `h3` — mezinadpisy uvnitř textu |
-| Text | 300 | 16 / 14 / 14 px | 1.5 | 0 | odstavce |
-| Navigace | 400 | 15 / 14 / 14 px | 1.0 | 0 | menu, odkazy v patičce |
+| Nadpis | **200** | 35 / 25 px | 1.2 | 0 | `h1`, `h2` — název stránky, sekce |
+| Text | **300** | 16 / 14 px | 1.5 | **+1.2 px** | odstavce |
+| Navigace | 300 | 16 / 14 px | 1.5 | 0 | menu, odkazy v patičce |
+
+**Prostrkání textu je kladné (+1.2 px), ne nulové.** Spolu se světlým řezem drží
+odstavce vzdušné. Nezapomínat na něj — bez něj text zhoustne, i když je font správný.
+
+**Mobilní velikosti (≤767 px) zbývá ověřit vizuálně** při screenshot review
+(úkol 10). V CSS je u nadpisu plynulá hodnota `6.5vw` a u dalších prvků `20px`,
+ale bez pohledu na stránku nejde spolehlivě přiřadit, co je co.
 
 **Rozhodovací logika:**
 
 - Nadpis se používá **jednou na stránku** jako `h1`. Další v pořadí jsou `h2`.
-- Mezi nadpisem a podnadpisem nikdy nevkládej mezistupeň velikosti. Dva stupně stačí.
+- Web vystačí se **dvěma stupni** — nadpis a text. Nevymýšlej mezistupně.
 - **Nikdy verzálky u nadpisů.** Navigace a drobné popisky smí mít `capitalize`,
   nadpisy ne.
 - **Nikdy nepodtrhávej nadpisy.**
+- **Nikdy nezvyšuj tloušťku nadpisu, aby „lépe vynikl".** Světlý řez je záměr.
 - Odstavce nechávej na levý praporek. Zarovnání do bloku vytváří v češtině řeky.
+
+### Poznámka ke zbytkům Inter, Roboto a Epilogue
+
+Živý web na několika místech ještě obsahuje `Inter` (globální výchozí nastavení
+Elementoru a jeden prvek na úvodní stránce), `Roboto` (rozbalovací menu) a
+`Epilogue`. **Nejsou to designová rozhodnutí — jsou to zbytky z doby před
+převodem webu do Poppins.**
+
+Replika je **nepřebírá**. Používá Poppins všude, tedy stav, jaký měl web mít.
+Bylo by chybou replikovat opomenutí jen proto, že jsou v produkci.
 
 **Český text:** pevné mezery za jednopísmennými předložkami a spojkami
 (`k`, `s`, `v`, `z`, `a`, `i`, `o`, `u`) — jinak zůstávají na konci řádku sirotci.
@@ -102,24 +119,35 @@ pojmenovat.
 
 ## 7. Do a Don't
 
+> **Stav: předběžné.** Tahle sekce zatím **není schválená.** Vznikla odvozením
+> ze zamčeného design systému, ne z Michalova rozhodnutí. Cílem tohoto projektu
+> je funkční pipeline, ne přesná vizuální shoda — exaktní GUI design se bude
+> řešit samostatně. Do té doby ber pravidla níže jako **výchozí nastavení, od
+> kterého se lze po dohodě odchýlit**, ne jako tvrdé zákazy.
+
 **Dělej:**
 
 - Přidávej prvky až tehdy, když bez nich stránka nefunguje.
-- Drž jeden font a dva stupně nadpisů.
+- Drž jeden font a dva typografické stupně.
 - Nech fotografiím prostor — raději větší než menší.
 - Kontrast hlídej na WCAG AA, u běžného textu miř na AAA. Bílá na černé to splňuje
   s velkou rezervou, tak si ji nekaz šedivěním textu.
 
-**Nedělej:**
+**Výchozí omezení** (odchylka je možná, ale má se vyslovit, ne prosadit potichu):
 
-- ❌ gradienty, jakékoli
+- ⚠️ **gradienty** — ve výchozím stavu ne, ale Michal je na webu v konkrétních
+  případech používá. Než je někam přidáš nebo odebereš, zeptej se.
 - ❌ stíny pod prvky
 - ❌ zaoblené rohy u fotografií
 - ❌ ikonky vedle nadpisů
 - ❌ druhý font
 - ❌ hex kód barvy přímo v komponentě místo tokenu
-- ❌ výzvy k akci typu „Kontaktujte mě" nebo „Objednat" — web je neprodejní záměrně
 - ❌ animace při scrollování
+
+**Tvrdé pravidlo, které platí bez ohledu na stav sekce:**
+
+- ❌ **žádné výzvy k akci** typu „Kontaktujte mě" nebo „Objednat". Web je neprodejní
+  záměrně, ne opomenutím — viz sekce 1.
 
 ## 8. Jak zadávat práci agentovi
 
@@ -147,7 +175,7 @@ design systém, než jaký živý web skutečně používá:
 | Text | `#E0E0E0` | `#FFFFFF` |
 | Nadpisy | `#F2F2F2` | `#FFFFFF` |
 | Sub-brand barvy | `#5E728E`, `#B24238`, `#8D9B86`, `#D8CFC5` | v CSS se nevyskytují |
-| Fonty | Ethnocentric Light, Proxima Nova Semibold | Inter |
+| Fonty | Ethnocentric Light, Proxima Nova Semibold | Poppins |
 
 **Rozhodnutí pro tuto repliku: řídíme se živým webem.** Cílem je replika toho, co
 existuje, ne implementace nenaplněného záměru.

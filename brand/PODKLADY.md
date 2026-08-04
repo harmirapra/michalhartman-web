@@ -9,7 +9,8 @@ zopakovat, až se živý web změní.
 
 | Co | Odkud |
 |---|---|
-| Barvy a typografie | Elementor CSS živého webu — globální proměnné `--e-global-color-*` a `--e-global-typography-*` |
+| Barvy | Elementor CSS živého webu — globální proměnné `--e-global-color-*` v `post-216.css` |
+| Typografie | **přepisy u jednotlivých prvků** v šablonách stránek — `post-1638.css` (O mně), `post-1171.css` (Úvod), `post-376.css` (navigace) |
 | Šířka obsahu, výška hero | `post-1171.css` (šablona úvodní stránky) |
 | Zlomy rozlišení | `@media` pravidla v `post-216.css` |
 | Texty stránek | HTML živého webu, doslovně |
@@ -41,9 +42,27 @@ aby odpovídala originálu.
 
 ## Zjištění, která stojí za zapamatování
 
-1. **Web používá jediný font — Inter.** Načítá sice i Poppins, Roboto a Epilogue,
-   ale všechny globální typografické styly Elementoru odkazují na Inter. Ostatní
-   rodiny tahají pluginy a v designu se neprojevují. Replika je nenačítá.
+1. **Web používá Poppins.** Elementor má dvě vrstvy nastavení typografie:
+   globální výchozí hodnoty (Site Settings) a **přepisy u jednotlivých prvků**
+   v šablonách stránek. Globální vrstva ještě obsahuje `Inter` — ale každý
+   viditelný prvek je přepsaný na Poppins.
+
+   | Šablona | Co to je | Fonty |
+   |---|---|---|
+   | `post-1638.css` | O mně | Poppins ×6, nic jiného |
+   | `post-1171.css` | Úvod | Poppins ×4, Inter ×1 |
+   | `post-376.css` | navigace | Poppins ×2, Roboto ×1 (rozbalovací menu) |
+   | `post-216.css` | globální výchozí | Inter ×6, Epilogue ×1 |
+
+   **Výskyty Inter, Roboto a Epilogue jsou zbytky z doby před převodem webu do
+   Poppins, ne designová rozhodnutí** — potvrdil Michal 4. 8. 2026. Replika je
+   nepřebírá a používá Poppins všude.
+
+   *Poznámka k metodě:* první měření četlo jen globální vrstvu a vyvodilo z toho
+   nesprávný závěr, že web běží na Inter. Rozdíl byl podstatný — Inter 600
+   (polotučné) proti skutečnému Poppins 200 (extra světlé). Ponaučení: u Elementoru
+   nikdy nestačí přečíst `--e-global-typography-*`, vždy je nutné projít i šablony
+   jednotlivých stránek.
 
 2. **Web je vícejazyčný** přes plugin TranslatePress — česká verze je výchozí,
    anglická na `/en/`. Etapa 1 řeší jen češtinu.
