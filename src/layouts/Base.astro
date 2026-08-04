@@ -1,0 +1,55 @@
+---
+import "@fontsource/poppins/latin-ext-200.css";
+import "@fontsource/poppins/latin-ext-300.css";
+import "@fontsource/poppins/200.css";
+import "@fontsource/poppins/300.css";
+import "../styles/global.css";
+
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const { title, description } = Astro.props;
+
+const stranky = [
+	{ href: "/", popisek: "Úvod" },
+	{ href: "/about/", popisek: "O mně" },
+];
+---
+
+<html lang="cs">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<title>{title}</title>
+		{description && <meta name="description" content={description} />}
+	</head>
+	<body>
+		<header class="hlavicka">
+			<div class="obsah">
+				<a class="znacka" href="/">Michal Hartman</a>
+				<nav class="navigace" aria-label="Hlavní navigace">
+					{stranky.map((s) => <a href={s.href}>{s.popisek}</a>)}
+				</nav>
+			</div>
+		</header>
+
+		<slot />
+
+		<footer class="paticka">
+			<div class="obsah">
+				<span>© Michal Hartman</span>
+				<div class="paticka-odkazy">
+					<a href="/impressum/">Impressum</a>
+					<a
+						href="https://www.facebook.com/MHSailingPhotographer"
+						rel="noopener">Facebook</a
+					>
+				</div>
+			</div>
+		</footer>
+	</body>
+</html>

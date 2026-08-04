@@ -44,6 +44,22 @@ Etapa 1 žádné nepotřebuje. Zdroj pravdy pro seznam je `.env.example`.
 - pushovat přímo do `main` — vždy přes branch a pull request,
 - zasahovat do produkčního WordPressu na `michalhartman.com`.
 
+## Dočasné odchylky od originálu (Etapa 1)
+
+Replika záměrně vynechává odkazy na stránky, které v Etapě 1 neexistují.
+Kdyby na ně vedl odkaz, kontrola odkazů by ho označila jako rozbitý.
+
+| Co chybí | Kde to na originále je | Kdy se doplní |
+|---|---|---|
+| **Galerie** | v navigaci a jako druhý rozcestník na úvodní stránce | Etapa 2 |
+| Ochrana osobních údajů | v patičce | zatím mimo rozsah |
+| Nastavení cookies | v patičce | zatím mimo rozsah |
+| Anglická verze `/en/` | přepínač jazyka v hlavičce | zatím mimo rozsah |
+
+**Nepřidávej odkazy na tyto stránky, dokud nevzniknou.**
+
+Adresy stránek jsou anglické (`/about/`, ne `/o-mne/`) — stejně jako na originále.
+
 ## Bezpečný postup změny
 
 ```
