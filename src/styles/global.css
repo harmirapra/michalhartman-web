@@ -1,0 +1,192 @@
+/* Tokeny a základní styly podle DESIGN.md.
+   Hodnoty se mění JEN tady. Žádné hex kódy ani velikosti přímo v komponentách. */
+
+:root {
+	/* Barvy — DESIGN.md, sekce 3 */
+	--barva-pozadi: #000000;
+	--barva-textu: #ffffff;
+	--barva-zvyrazneni: #c02323;
+	--barva-akcent-tlumeny: #af4b2f;
+	--barva-text-tlumeny: #e6e6e6;
+
+	/* Typografie — DESIGN.md, sekce 4 */
+	--pismo: "Poppins", system-ui, -apple-system, sans-serif;
+	--nadpis-rez: 200;
+	--nadpis-velikost: 35px;
+	--nadpis-radkovani: 1.2;
+	--text-rez: 300;
+	--text-velikost: 16px;
+	--text-radkovani: 1.5;
+	--text-prostrkani: 1.2px;
+
+	/* Layout — DESIGN.md, sekce 5 */
+	--sirka-obsahu: 900px;
+	--hero-vyska: 65vh;
+
+	/* Rytmus: základní jednotka 8 px a její násobky */
+	--mezera-1: 8px;
+	--mezera-2: 16px;
+	--mezera-3: 24px;
+	--mezera-4: 32px;
+	--mezera-6: 48px;
+	--mezera-8: 64px;
+	--mezera-12: 96px;
+}
+
+@media (max-width: 1024px) {
+	:root {
+		--nadpis-velikost: 25px;
+		--text-velikost: 14px;
+		--hero-vyska: 45vh;
+	}
+}
+
+@media (max-width: 767px) {
+	:root {
+		--hero-vyska: 28vh;
+	}
+}
+
+/* ---------- základ ---------- */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--barva-pozadi);
+	color: var(--barva-textu);
+	font-family: var(--pismo);
+	font-weight: var(--text-rez);
+	font-size: var(--text-velikost);
+	line-height: var(--text-radkovani);
+	letter-spacing: var(--text-prostrkani);
+	-webkit-font-smoothing: antialiased;
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+}
+
+/* ---------- typografie ---------- */
+
+h1,
+h2 {
+	font-weight: var(--nadpis-rez);
+	font-size: var(--nadpis-velikost);
+	line-height: var(--nadpis-radkovani);
+	letter-spacing: 0;
+	margin: 0 0 var(--mezera-3);
+}
+
+p {
+	margin: 0 0 var(--mezera-3);
+	max-width: 68ch;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+a:hover,
+a:focus-visible {
+	color: var(--barva-zvyrazneni);
+}
+
+/* ---------- rozvržení ---------- */
+
+.obsah {
+	width: 100%;
+	max-width: var(--sirka-obsahu);
+	margin: 0 auto;
+	padding: 0 var(--mezera-3);
+}
+
+main {
+	padding: var(--mezera-8) 0 var(--mezera-12);
+}
+
+/* ---------- hlavička ---------- */
+
+.hlavicka {
+	padding: var(--mezera-3) 0;
+}
+
+.hlavicka .obsah {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--mezera-3);
+	flex-wrap: wrap;
+}
+
+.znacka {
+	font-weight: var(--nadpis-rez);
+	letter-spacing: 0;
+}
+
+.navigace {
+	display: flex;
+	gap: var(--mezera-3);
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+	padding: 0;
+	min-height: var(--hero-vyska);
+	background-image: url("/img/hero-aegean-sunset.jpg");
+	background-size: cover;
+	background-position: center;
+	display: flex;
+	align-items: center;
+}
+
+.hero-vnitrek {
+	padding: var(--mezera-6) var(--mezera-3);
+	width: 100%;
+	max-width: var(--sirka-obsahu);
+	margin: 0 auto;
+}
+
+.hero h1 {
+	margin-bottom: var(--mezera-4);
+}
+
+.rozcestnik {
+	display: flex;
+	gap: var(--mezera-4);
+}
+
+/* ---------- popisek fotografie ---------- */
+
+.popisek {
+	color: var(--barva-text-tlumeny);
+	margin: var(--mezera-1) 0 var(--mezera-6);
+}
+
+/* ---------- patička ---------- */
+
+.paticka {
+	border-top: 1px solid var(--barva-akcent-tlumeny);
+	padding: var(--mezera-4) 0;
+}
+
+.paticka .obsah {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--mezera-3);
+	flex-wrap: wrap;
+}
+
+.paticka-odkazy {
+	display: flex;
+	gap: var(--mezera-3);
+	flex-wrap: wrap;
+}
