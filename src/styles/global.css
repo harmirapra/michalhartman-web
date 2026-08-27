@@ -8,6 +8,10 @@
 	--barva-zvyrazneni: #c02323;
 	--barva-akcent-tlumeny: #af4b2f;
 	--barva-text-tlumeny: #e6e6e6;
+	--barva-hero-nadpis: rgba(230, 230, 230, 0.5);
+	--barva-hero-overlay: rgba(0, 0, 0, 0.35);
+	--barva-oddelovac: #333333;
+	--barva-oddelovac-text: #666666;
 
 	/* Typografie — DESIGN.md, sekce 4 */
 	--pismo: "Poppins", system-ui, -apple-system, sans-serif;
@@ -22,6 +26,7 @@
 	/* Layout — DESIGN.md, sekce 5 */
 	--sirka-obsahu: 900px;
 	--hero-vyska: 65vh;
+	--sirka-fotky-about: 380px;
 
 	/* Rytmus: základní jednotka 8 px a její násobky */
 	--mezera-1: 8px;
@@ -31,6 +36,9 @@
 	--mezera-6: 48px;
 	--mezera-8: 64px;
 	--mezera-12: 96px;
+
+	/* Značka v hlavičce */
+	--znacka-velikost: 20px;
 }
 
 @media (max-width: 1024px) {
@@ -44,6 +52,7 @@
 @media (max-width: 767px) {
 	:root {
 		--hero-vyska: 28vh;
+		--znacka-velikost: 16px;
 	}
 }
 
@@ -112,56 +121,143 @@ main {
 	padding: var(--mezera-8) 0 var(--mezera-12);
 }
 
-/* ---------- hlavička ---------- */
+/* ---------- odkaz-vzhled: vypadá jako odkaz, ale je to <span> bez href ---------- */
+/* Používá se pro záměrně nefunkční položky (Galerie, jazyky, patička) — viz DESIGN.md a
+   task-2-brief.md, sekce „Rozsah MVP". Nikdy href="#". */
 
-.hlavicka {
-	padding: var(--mezera-3) 0;
+.odkaz-vzhled {
+	color: inherit;
 }
 
-.hlavicka .obsah {
+/* ---------- hlavička ---------- */
+/* position: absolute — header plave nad hero fotkou, netlačí ji dolů. DESIGN.md sekce 10. */
+
+.hlavicka {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 99;
+	background: linear-gradient(180deg, var(--barva-pozadi) 0%, transparent 100%);
 	display: flex;
-	align-items: baseline;
 	justify-content: space-between;
-	gap: var(--mezera-3);
-	flex-wrap: wrap;
+	align-items: center;
+	padding: var(--mezera-4) var(--mezera-8);
+}
+
+@media (max-width: 767px) {
+	.hlavicka {
+		padding: var(--mezera-3) var(--mezera-3);
+	}
 }
 
 .znacka {
-	font-weight: var(--nadpis-rez);
-	letter-spacing: 0;
+	font-weight: 300;
+	font-size: var(--znacka-velikost);
+	letter-spacing: 0.5px;
+	color: var(--barva-textu);
+	text-decoration: none;
 }
 
 .navigace {
 	display: flex;
-	gap: var(--mezera-3);
+	align-items: center;
+	gap: 40px;
+	font-weight: 300;
+	font-size: 16px;
+	letter-spacing: 0;
 }
 
-/* ---------- hero ---------- */
+.navigace a,
+.navigace .odkaz-vzhled {
+	color: var(--barva-textu);
+	text-decoration: none;
+}
 
-.hero {
-	padding: 0;
-	min-height: var(--hero-vyska);
-	background-image: url("/img/hero-aegean-sunset.jpg");
-	background-size: cover;
-	background-position: center;
+.navigace a[aria-current="page"],
+.navigace .aktivni {
+	border-bottom: 1px solid var(--barva-textu);
+	padding-bottom: 2px;
+}
+
+.jazyky {
 	display: flex;
 	align-items: center;
+	gap: var(--mezera-1);
+	margin-left: var(--mezera-1);
+	padding-left: var(--mezera-3);
+	border-left: 1px solid var(--barva-oddelovac);
 }
 
-.hero-vnitrek {
-	padding: var(--mezera-6) var(--mezera-3);
+.jazyky-oddelovac {
+	color: var(--barva-oddelovac-text);
+}
+
+/* Hamburger — čistě vizuální placeholder na mobilu, bez otevíracího chování. */
+
+.hamburger {
+	display: none;
+	flex-direction: column;
+	justify-content: center;
+	gap: 5px;
+	width: 24px;
+	height: 24px;
+}
+
+.hamburger span {
+	display: block;
+	height: 2px;
 	width: 100%;
-	max-width: var(--sirka-obsahu);
-	margin: 0 auto;
+	background: var(--barva-textu);
 }
 
-.hero h1 {
-	margin-bottom: var(--mezera-4);
+@media (max-width: 767px) {
+	.navigace {
+		display: none;
+	}
+
+	.hamburger {
+		display: flex;
+	}
 }
 
-.rozcestnik {
+/* ---------- hero (viz src/components/Hero.astro) ---------- */
+
+.hero {
+	position: relative;
+	min-height: var(--hero-vyska);
+	overflow: hidden;
+}
+
+.hero-foto {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.hero-overlay {
+	position: absolute;
+	inset: 0;
+	background: var(--barva-hero-overlay);
+}
+
+.hero-obsah {
+	position: relative;
+	z-index: 1;
+	height: 100%;
 	display: flex;
-	gap: var(--mezera-4);
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	padding-bottom: var(--mezera-12);
+}
+
+.hero-obsah h1 {
+	margin: 0;
+	color: var(--barva-hero-nadpis);
+	text-align: center;
 }
 
 /* ---------- popisek fotografie ---------- */
@@ -174,19 +270,112 @@ main {
 /* ---------- patička ---------- */
 
 .paticka {
-	border-top: 1px solid var(--barva-akcent-tlumeny);
-	padding: var(--mezera-4) 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--mezera-4);
+	padding: var(--mezera-4) var(--mezera-8);
+	font-weight: 300;
+	font-size: 16px;
 }
 
-.paticka .obsah {
-	display: flex;
-	justify-content: space-between;
-	gap: var(--mezera-3);
-	flex-wrap: wrap;
+.paticka-oddelovac {
+	color: var(--barva-oddelovac-text);
 }
 
-.paticka-odkazy {
+.paticka-facebook {
 	display: flex;
+	align-items: center;
+	color: var(--barva-textu);
+}
+
+@media (max-width: 767px) {
+	.paticka {
+		flex-wrap: wrap;
+		gap: 12px 20px;
+		font-size: 13px;
+		justify-content: center;
+	}
+}
+
+/* ---------- stránka „O mně" — úkol 4 ---------- */
+/* Tři obsahové sekce v zig-zag layoutu. Struktura a rozměry podle DESIGN.md,
+   sekce 11, a task-4-brief.md. Dva vlastní tokeny bez existující obdoby v
+   hlavní sadě (viz úkol 2, krok 2.1, pro precedens „hodnoty bez tokenu"). */
+
+:root {
+	/* Mezera mezi fotkou a textem v zig-zag sekci — 40px, měřeno ve wireframu
+	   About.dc.html. Zapadá do rytmu 8px (5×8), ale v původní škále chybí. */
+	--mezera-about-gap: 40px;
+
+	/* Velikost skrytého/mobilního nadpisu sekce („Fotograf", „Jachtař") —
+	   měřeno ve wireframu About-Mobile.dc.html. Desktopová velikost se
+	   neuplatní, protože nadpis je na desktopu skrytý (viz .about-nadpis-sekce). */
+	--nadpis-sekce-velikost: 20px;
+}
+
+.about-sekce {
+	margin-top: var(--mezera-8);
+}
+
+.about-sekce:first-child {
+	margin-top: 0;
+}
+
+/* Nadpis sekce musí zůstat v HTML kvůli mobilu a přístupnosti, ale na
+   desktopu (živý web) je schválně skrytý — elementor-hidden-desktop.
+   Nemazat z HTML, jen skrývat přes CSS. */
+.about-nadpis-sekce {
+	font-weight: var(--nadpis-rez);
+	font-size: var(--nadpis-sekce-velikost);
+	letter-spacing: 0;
+	text-align: center;
+	margin: 0 0 var(--mezera-3);
+}
+
+@media (min-width: 1025px) {
+	.about-nadpis-sekce {
+		display: none;
+	}
+}
+
+/* Řádek foto + text. Mobil (≤767px): sloupec, pořadí přímo z HTML (foto,
+   pak text) — funguje stejně pro všechny tři sekce, včetně „Fotograf",
+   která je na desktopu obrácená. Od 768px výš: řádek, případně row-reverse. */
+.about-sekce-radek {
+	display: flex;
+	flex-direction: column;
 	gap: var(--mezera-3);
-	flex-wrap: wrap;
+}
+
+.about-sekce-foto img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+
+@media (min-width: 768px) {
+	.about-sekce-radek {
+		flex-direction: row;
+		align-items: center;
+		gap: var(--mezera-about-gap);
+	}
+
+	.about-sekce-reverse .about-sekce-radek {
+		flex-direction: row-reverse;
+	}
+
+	.about-sekce-foto {
+		flex: 0 0 var(--sirka-fotky-about);
+	}
+
+	.about-sekce-text {
+		flex: 1;
+	}
+}
+
+/* „Kvalifikace:" zůstává obyčejný odstavec (ne nadpis) — jinak by se
+   na desktopu skryl spolu s .about-nadpis-sekce. Jen vizuální odstup shora. */
+.about-kvalifikace {
+	margin-top: var(--mezera-3);
 }
