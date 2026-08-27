@@ -109,13 +109,17 @@ pojmenovat.
 
 | Komponenta | Kdy | Jak vypadá |
 |---|---|---|
-| Hero | pouze úvodní stránka | fotografie přes celou šířku, přes ni jeden nadpis a dva odkazy |
-| Navigace | každá stránka | vodorovná, textová, bez ikon, bez zvýraznění aktivní položky barvou |
-| Textová stránka | O mně, Impressum | nadpis, odstavce v šířce obsahu, případné fotografie s popiskem |
+| Hero | úvodní stránka i „O mně" (sdílená šablona) | fotografie přes celou šířku, přes ni jeden nadpis a dva odkazy — mechanika viz sekce 10 |
+| Navigace | každá stránka | vodorovná, textová, bez ikon, bez zvýraznění aktivní položky barvou (aktivní stránka = podtržení) |
+| Textová stránka | O mně, Impressum | nadpis, odstavce v šířce obsahu, případné fotografie s popiskem — vzor „O mně" viz sekce 11 |
 | Popisek fotografie | pod fotografií | tlumená barva, velikost jako navigace, jedna věta |
-| Patička | každá stránka | copyright, právní odkazy, odkaz na Facebook — jednořádkově |
+| Patička | každá stránka | copyright a odkazy oddělené znakem `\|` (bez `\|` jen mezi posledním textovým odkazem a Facebook ikonou), poslední položka je odkaz s ikonou Facebook (vlastní inline SVG, ne emoji) — jednořádkově na desktopu, na mobilu se zalamuje (`flex-wrap: wrap`, vycentrováno) |
 
-**Hero fotografie na živém webu:** `MH-DSC09654-Aegean-Sunset.jpg`.
+**Hero fotografie na živém webu:** `MH-DSC09654-Aegean-Sunset.jpg` — stejná fotka se používá jako hero na úvodní stránce i na „O mně" (sdílená šablona, ne dvě různé fotky).
+
+**Hero nadpis (živý text, úvodní stránka):** „Světlo, místa, okamžiky" — barva `rgba(230, 230, 230, 0.5)` (měřeno jako `#E6E6E680` v CSS, tj. tlumená `#E6E6E6` na ~50 % průhlednosti — **ne plná bílá**), zarovnání textu **dolů** v hero ploše (`justify-content: flex-end`), ne na střed.
+
+**Hero fotka má tmavý overlay `opacity: 0.35`** (kvůli čitelnosti textu/navigace nad fotkou) — samostatná vrstva nad fotkou, pod textem.
 
 ## 7. Do a Don't
 
@@ -186,3 +190,79 @@ s realitou nerozcházejí, jen v ní nebyly zapsané.
 
 Rozhodnutí, který z těch dvou stavů je ten správný, **není součástí tohoto projektu**.
 Je to položka v backlogu PACT: *„Sladit design systém webu s dokumentem (nebo naopak)."*
+
+---
+
+## 10. Header — chování a mechanika
+
+Ověřeno přímo z živého CSS (`frontend.min.css`, `she-header-style.css`,
+`post-*.css`), 27.–28. 8. 2026. Wireframe potvrzen v Claude Design canvas.
+
+**Layout:** titul webu „Michal Hartman" vlevo, vpravo vodorovné menu (Úvod,
+Galerie, O mně) + language selector (CZ/EN, oddělený svislou čárou). Na
+mobilu se menu nahrazuje hamburger ikonou (potvrzeno vizuálně na živém
+webu), titul zůstává vlevo.
+
+**Pozicování — plave nad hero fotkou, netlačí ji dolů.** Header je
+`position: absolute` (v „transparentním" stavu nahoře stránky) a přepíná
+se na `position: fixed` po scrollu (plugin „Sticky Header Effects for
+Elementor"). Není to CSS `position: sticky` v běžném slova smyslu, funkčně
+je ale výsledek stejný — header zůstává nahoře. `z-index` nad hero obsahem.
+
+**Gradient pozadí:** `linear-gradient(180deg, #000000 0%, transparent 100%)`
+— **černá → průhledná, ne černá → bílá.** Živé CSS má technicky
+`#AF4B2F00` jako druhý bod (barva tlumeného akcentu s alfa kanálem 0), což
+je vizuálně identické s čistě transparentní barvou. Efekt: nahoře tmavý
+pruh kvůli čitelnosti menu, směrem dolů gradient odkrývá fotku pod sebou.
+
+## 11. Stránka „O mně" — vzor a odlišnosti od Úvodu
+
+Ověřeno přímo z živého `/about/` (HTML + `post-1638.css`), potvrzeno
+wireframem v Claude Design canvas (desktop i mobil), 27.–28. 8. 2026.
+
+**Hero:** stejná šablona a stejná fotka jako Úvod (viz sekce 6), jen jiný
+nadpis („O mně" místo „Světlo, místa, okamžiky").
+
+**Tři obsahové sekce, střídavý layout (zig-zag):**
+
+| Sekce | Foto | Text (desktop) |
+|---|---|---|
+| Úvod (3 odstavce) | vlevo | vpravo |
+| Fotograf (6 odstavců) | **vpravo** | **vlevo** |
+| Jachtař (3 odstavce + kvalifikace) | vlevo | vpravo |
+
+Obsahová šířka `900px`, sloupec fotky `380px`, mezera `40px`, text
+`16px/300/letter-spacing 1.2px/#E6E6E6` (odpovídá tokenu odstavce z
+sekce 3–4), poměr stran fotek: portréty 4:5 (500×625), jachtařská fotka
+~3:4 (1204×1600).
+
+**Nadpisy sekcí („Fotograf", „Jachtař") jsou schválně skryté na
+desktopu** (`elementor-hidden-desktop` na obalovém kontejneru, Elementor
+jádro: `@media (min-width:1025px){display:none}`) — **viditelné jsou jen
+na tabletu a mobilu.** Desktop tedy nemá vůbec žádný nadpis nad druhou a
+třetí sekcí, jen fotka + text. Nadpis: `h4`, weight 200, mobil potvrzeno
+`20px`; desktopová velikost se v CSS nenašla (dědí se odjinud) — odhad
+~24px, k dohledání při implementaci.
+
+**Mobilní chování — foto vždy jako první, text pod ním, jeden sloupec.**
+Elementor na mobilu **nemění `flex-direction`**, jen zapíná `flex-wrap`
+(`@media (max-width:767px){.e-con.e-flex{--flex-wrap:var(--flex-wrap-mobile)}}`).
+Sekce „Fotograf" (jediná s `row-reverse` na desktopu) má navíc
+`--flex-wrap-mobile: wrap-reverse` — kombinace `row-reverse` +
+`wrap-reverse` se vzájemně zruší, takže i ona padne na mobilu do stejného
+přirozeného pořadí (foto → text) jako ostatní dvě sekce. Foto slouží jako
+vizuální oddělovač mezi bloky textu. Mobilní velikost textu `14px`
+(potvrzeno CSS), nadpisy sekcí `20px` (na mobilu viditelné).
+
+**Fotky použité na stránce** (soubory na živém webu, k převzetí při
+implementaci): `GLR-DSC05425-MH-person.jpg` (portrét, úvodní sekce),
+`GLR-DSC09524-with-Jaja.jpg` (sekce Fotograf), `sailor.jpeg` (sekce
+Jachtař).
+
+**Text je z živého webu doslovný** — 12 odstavců + tři nadpisy, viz
+`0_Projects/web-michalhartman/outputs/design-poc/About.dc.html` v PACTu
+pro plné znění použité ve wireframu.
+
+**Živé CSS obsahuje drobné artefakty, které se záměrně nepřebírají:**
+`line-height:1.2px` u hero nadpisu (skoro jistě měl být bezjednotkový
+`1.2`) a nepoužitý `text-stroke-color:#000` bez nastavené šířky.
