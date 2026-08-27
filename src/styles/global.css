@@ -193,7 +193,7 @@ main {
 	color: var(--barva-oddelovac-text);
 }
 
-/* Hamburger — čistě vizuální placeholder na mobilu, bez otevíracího chování. */
+/* Hamburger — otevírá/zavírá mobilní navigaci (viz <script> v Base.astro). */
 
 .hamburger {
 	display: none;
@@ -202,6 +202,10 @@ main {
 	gap: 5px;
 	width: 24px;
 	height: 24px;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
 }
 
 .hamburger span {
@@ -214,6 +218,19 @@ main {
 @media (max-width: 767px) {
 	.navigace {
 		display: none;
+	}
+
+	.navigace.otevrena {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--mezera-3);
+		position: absolute;
+		top: 100%;
+		left: 0;
+		width: 100%;
+		padding: var(--mezera-3);
+		background: var(--barva-pozadi);
 	}
 
 	.hamburger {
@@ -244,9 +261,9 @@ main {
 }
 
 .hero-obsah {
-	position: relative;
+	position: absolute;
+	inset: 0;
 	z-index: 1;
-	height: 100%;
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
