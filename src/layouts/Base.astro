@@ -28,7 +28,7 @@ const jeAktivni = (href: string) => cesta === href;
 	<body>
 		<header class="hlavicka">
 			<a class="znacka" href="/">Michal Hartman</a>
-			<nav class="navigace" aria-label="Hlavní navigace">
+			<nav id="mobilni-navigace" class="navigace" aria-label="Hlavní navigace">
 				<a href="/" aria-current={jeAktivni("/") ? "page" : undefined}>Úvod</a>
 				<span class="odkaz-vzhled">Galerie</span>
 				<a href="/about/" aria-current={jeAktivni("/about/") ? "page" : undefined}>O mně</a>
@@ -38,11 +38,17 @@ const jeAktivni = (href: string) => cesta === href;
 					<span class="odkaz-vzhled">EN</span>
 				</div>
 			</nav>
-			<div class="hamburger" aria-hidden="true">
+			<button
+				type="button"
+				class="hamburger"
+				aria-expanded="false"
+				aria-controls="mobilni-navigace"
+				aria-label="Otevřít navigaci"
+			>
 				<span></span>
 				<span></span>
 				<span></span>
-			</div>
+			</button>
 		</header>
 
 		<slot />
@@ -70,5 +76,25 @@ const jeAktivni = (href: string) => cesta === href;
 				</svg>
 			</span>
 		</footer>
+
+		<script>
+			const tlacitko = document.querySelector(".hamburger");
+			const navigace = document.querySelector(".navigace");
+
+			if (tlacitko && navigace) {
+				tlacitko.addEventListener("click", () => {
+					const otevreno = navigace.classList.toggle("otevrena");
+					tlacitko.setAttribute("aria-expanded", String(otevreno));
+				});
+
+				document.addEventListener("click", (event) => {
+					if (!navigace.classList.contains("otevrena")) return;
+					const cil = event.target as Node;
+					if (navigace.contains(cil) || tlacitko.contains(cil)) return;
+					navigace.classList.remove("otevrena");
+					tlacitko.setAttribute("aria-expanded", "false");
+				});
+			}
+		</script>
 	</body>
 </html>
