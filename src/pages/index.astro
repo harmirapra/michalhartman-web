@@ -1,17 +1,11 @@
 ---
 import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
 ---
 
 <Base
 	title="MICHAL HARTMAN – Fotograf, jachtař, poutník."
 	description="Osobní portfolio Michala Hartmana — fotografa, jachtaře a poutníka."
 >
-	<main class="hero">
-		<div class="hero-vnitrek">
-			<h1>Světlo, místa, okamžiky</h1>
-			<div class="rozcestnik">
-				<a href="/about/">O mně</a>
-			</div>
-		</div>
-	</main>
+	<Hero nadpis="Světlo, místa, okamžiky" eager />
 </Base>

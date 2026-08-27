@@ -1,0 +1,26 @@
+---
+// Sdílená hero komponenta — stejná šablona (i fotka) pro Úvod i O mně.
+// Viz DESIGN.md, sekce 6 a 10, a task-2-brief.md, krok 2.4.
+
+interface Props {
+	nadpis: string;
+	eager?: boolean;
+}
+
+const { nadpis, eager = false } = Astro.props;
+---
+
+<section class="hero">
+	<img
+		class="hero-foto"
+		src="/img/hero-aegean-sunset.jpg"
+		width="2560"
+		height="1018"
+		alt="Západ slunce nad Egejským mořem, pohled z paluby plachetnice"
+		loading={eager ? "eager" : "lazy"}
+	/>
+	<div class="hero-overlay"></div>
+	<div class="hero-obsah">
+		<h1>{nadpis}</h1>
+	</div>
+</section>

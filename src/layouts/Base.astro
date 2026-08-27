@@ -12,10 +12,8 @@ interface Props {
 
 const { title, description } = Astro.props;
 
-const stranky = [
-	{ href: "/", popisek: "Úvod" },
-	{ href: "/about/", popisek: "O mně" },
-];
+const cesta = Astro.url.pathname;
+const jeAktivni = (href: string) => cesta === href;
 ---
 
 <html lang="cs">
@@ -29,27 +27,48 @@ const stranky = [
 	</head>
 	<body>
 		<header class="hlavicka">
-			<div class="obsah">
-				<a class="znacka" href="/">Michal Hartman</a>
-				<nav class="navigace" aria-label="Hlavní navigace">
-					{stranky.map((s) => <a href={s.href}>{s.popisek}</a>)}
-				</nav>
+			<a class="znacka" href="/">Michal Hartman</a>
+			<nav class="navigace" aria-label="Hlavní navigace">
+				<a href="/" aria-current={jeAktivni("/") ? "page" : undefined}>Úvod</a>
+				<span class="odkaz-vzhled">Galerie</span>
+				<a href="/about/" aria-current={jeAktivni("/about/") ? "page" : undefined}>O mně</a>
+				<div class="jazyky">
+					<span class="odkaz-vzhled aktivni">CZ</span>
+					<span class="jazyky-oddelovac">/</span>
+					<span class="odkaz-vzhled">EN</span>
+				</div>
+			</nav>
+			<div class="hamburger" aria-hidden="true">
+				<span></span>
+				<span></span>
+				<span></span>
 			</div>
 		</header>
 
 		<slot />
 
 		<footer class="paticka">
-			<div class="obsah">
-				<span>© Michal Hartman</span>
-				<div class="paticka-odkazy">
-					<a href="/impressum/">Impressum</a>
-					<a
-						href="https://www.facebook.com/MHSailingPhotographer"
-						rel="noopener">Facebook</a
-					>
-				</div>
-			</div>
+			<span>© 2026 Michal Hartman</span>
+			<span class="paticka-oddelovac">|</span>
+			<span class="odkaz-vzhled">Ochrana osobních údajů</span>
+			<span class="paticka-oddelovac">|</span>
+			<span class="odkaz-vzhled">Nastavení cookies</span>
+			<span class="paticka-oddelovac">|</span>
+			<span class="odkaz-vzhled">Impressum</span>
+			<span class="odkaz-vzhled paticka-facebook" aria-label="Facebook">
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M15 8.5h-2a1 1 0 0 0-1 1V11h3l-.4 3H12v7h-3v-7H7v-3h2V9a4 4 0 0 1 4-4h2z"></path>
+				</svg>
+			</span>
 		</footer>
 	</body>
 </html>
