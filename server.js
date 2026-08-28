@@ -12,12 +12,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import compression from 'compression';
 import express from 'express';
-import sharp from 'sharp';
 
-// Připraveno pro zpracování fotek v pozdější fázi. Bez tohohle si libvips drží
-// vlastní vyrovnávací paměť a paměťová stopa při hromadném zpracování roste.
-sharp.cache(false);
-sharp.concurrency(1);
+// POZNÁMKA pro fázi 3: až se sem přidá zpracování fotek, musí inicializace
+// začít `sharp.cache(false)` a `sharp.concurrency(1)`. Bez toho si libvips drží
+// vlastní vyrovnávací paměť a stopa při hromadném zpracování roste.
+// Teď se `sharp` záměrně neimportuje — nic ho nepoužívá a selhání nativní
+// knihovny by shodilo web kvůli závislosti, kterou nepotřebuje.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, 'dist');
