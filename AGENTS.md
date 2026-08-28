@@ -20,9 +20,16 @@ cp .env.example .env   # zatím prázdné, Etapa 1 žádné proměnné nepotřeb
 ```bash
 npm run dev           # vývojový server, http://localhost:4321
 npm run build         # sestavení do dist/
-npm start             # servírování sestavené verze (jako na produkci)
+npm start             # tenký server (server.js) nad hotovým dist/ — jako na produkci
 npm run check:links   # kontrola, že žádný odkaz nevede do prázdna
 ```
+
+`npm start` spouští `server.js` — vlastní tenký Express server, který servíruje
+`dist/` (žádné SSR, Astro pořád generuje statiku při buildu). Poslouchá na
+portu z proměnné `PORT` (výchozí `4321`), zapíná gzip/Brotli kompresi a na
+neznámé cestě vrací 404. Architektura na něj později naváže vlastní cesty
+(`/photos/*`, `/api/index.json`, `/admin/upload`, `/admin/rebuild`) — zatím
+žádná z nich neexistuje.
 
 ## Deploy
 
