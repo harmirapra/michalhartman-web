@@ -32,6 +32,13 @@
 	--hero-vyska: 65vh;
 	--sirka-fotky-about: 380px;
 
+	/* Naměřená výška hlavičky (padding nahoře i dole + obsah), ne vypočtená.
+	   Hlavička je position: absolute (viz sekce „hlavička" níže), takže
+	   nemá vlastní rozměr v toku dokumentu — stránky bez hero fotky si podle
+	   téhle hodnoty musí odsazení obsahu dopočítat samy (viz .bez-hero).
+	   Změř znovu v prohlížeči, kdyby se změnil padding hlavičky nebo velikost značky. */
+	--vyska-hlavicky: 94px;
+
 	/* Rytmus: základní jednotka 8 px a její násobky */
 	--mezera-1: 8px;
 	--mezera-2: 16px;
@@ -57,6 +64,8 @@
 	:root {
 		--hero-vyska: 28vh;
 		--znacka-velikost: 16px;
+		/* Hlavička má na mobilu menší padding (viz sekce „hlavička"), takže je nižší. */
+		--vyska-hlavicky: 78px;
 	}
 }
 
@@ -142,6 +151,14 @@ a:focus-visible {
 
 main {
 	padding: var(--mezera-8) 0 var(--mezera-12);
+}
+
+/* Hlavička je position: absolute (netlačí obsah dolů), takže stránky bez
+   hero fotky (ta hlavičce odsazení dává vizuálně, ne v toku dokumentu) by
+   jinak měly nadpis nalepený hned pod hlavičkou. Přidávají si tenhle
+   odstup samy. Stránky s <Hero> třídu nemají a nesmí ji dostat. */
+main.bez-hero {
+	padding-top: calc(var(--vyska-hlavicky) + var(--mezera-8));
 }
 
 /* ---------- odkaz-vzhled: vypadá jako odkaz, ale je to <span> bez href ---------- */
