@@ -27,9 +27,11 @@ npm run check:links   # kontrola, že žádný odkaz nevede do prázdna
 `npm start` spouští `server.js` — vlastní tenký Express server, který servíruje
 `dist/` (žádné SSR, Astro pořád generuje statiku při buildu). Poslouchá na
 portu z proměnné `PORT` (výchozí `4321`), zapíná gzip/Brotli kompresi a na
-neznámé cestě vrací 404. Architektura na něj později naváže vlastní cesty
-(`/photos/*`, `/api/index.json`, `/admin/upload`, `/admin/rebuild`) — zatím
-žádná z nich neexistuje.
+neznámé cestě vrací 404.
+
+Od fáze 2 server navíc obsluhuje `/admin/*` (kód v `server/`) — trvalý disk
+a příjem fotek, viz sekce níže. `/photos/*` a `/api/index.json` přijdou až
+ve fázi 3.
 
 ## Deploy
 
@@ -43,6 +45,38 @@ Nasazuje se na Railway ze složky `dist/`.
 ## Environment variables
 
 Etapa 1 žádné nepotřebuje. Zdroj pravdy pro seznam je `.env.example`.
+
+Etapa 2 přidává:
+
+- `DATA_DIR` — cesta k datovému adresáři, výchozí `/data`. V Railway je tam
+  připojený trvalý disk (volume). Lokálně a v náhledu PR disk připojený být
+  nemusí — server si strukturu vytvoří na dočasném souborovém systému.
+- `ADMIN_TOKEN` — token pro `/admin/*` (hlavička `Authorization: Bearer
+  <token>`). Chybí-li, `/admin/*` je celé nedostupné (503). Nikdy nepatří
+  do repa.
+
+## `/admin/*` (fáze 2)
+
+Chráněné endpointy, token se ověřuje dřív, než server přečte tělo
+požadavku (viz `server/adminAuth.js`). Neúspěšné pokusy o autorizaci se
+počítají podle IP jen v paměti procesu — po pár pokusech přijde 429, restart
+serveru počítadlo vynuluje.
+
+- `POST /admin/upload?path=<relativní cesta k fotce>` — tělo požadavku jsou
+  syrová data fotky. Cesta se slugifikací převede na klíč (`server/slug.js`),
+  klíč se ještě zvlášť ověří proti povolenému tvaru (`a-z0-9-`) — cesta na
+  disku se nikdy neskládá zřetězením s tím, co pošle klient. Uloží fotku do
+  `$DATA_DIR/originals/<klíč>.jpg` přes dočasný soubor s náhodnou příponou
+  a přejmenování. Vrací klíč, sha256 otisk (spočtený serverem z přijatých
+  dat) a velikost.
+- `GET /admin/stav` — diagnostika úložiště: jde zapisovat, kolik je tam
+  originálů, kolik zbývá místa. (Tohle není report o obsahu knihovny —
+  ten přijde ve fázi 3 jako `/admin/report`.)
+
+Co ve fázi 2 záměrně chybí: čtení metadat, náhledy, index, `/photos/*`,
+`GET /admin/files`, mazání. Viz
+`0_Projects/web-michalhartman/plans/2026-08-29-faze-2-disk-a-prijem-fotek.md`
+v repu PACT.
 
 ## Co agent nesmí
 
