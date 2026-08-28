@@ -77,8 +77,13 @@ body {
 	font-size: var(--text-velikost);
 	line-height: var(--text-radkovani);
 	letter-spacing: var(--text-prostrkani);
-	-webkit-font-smoothing: antialiased;
 }
+
+/* Záměrně tu NENÍ `-webkit-font-smoothing: antialiased`.
+   Vypíná subpixelové vyhlazování a u světlého textu na černém pozadí
+   v tenkém řezu 200 dělá písmo tenčí a hrany roztřepené — na retina
+   displeji viditelně. Ověřeno srovnáním 28. 8. 2026, viz worklog.
+   Nepřidávat zpět bez vizuální kontroly na macOS. */
 
 img {
 	max-width: 100%;
