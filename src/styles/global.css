@@ -22,6 +22,10 @@
 	--text-velikost: 16px;
 	--text-radkovani: 1.5;
 	--text-prostrkani: 1.2px;
+	/* Tučný text uvnitř odstavce (popisky v Impressum, adresní blok).
+	   500 místo prohlížečových 700 — web stojí na světlých řezech 200/300,
+	   plná tučnost by vybočila. DESIGN.md sekce 4: hierarchie velikostí a tloušťkou. */
+	--text-rez-zvyraznene: 500;
 
 	/* Layout — DESIGN.md, sekce 5 */
 	--sirka-obsahu: 900px;
@@ -96,6 +100,20 @@ h2 {
 p {
 	margin: 0 0 var(--mezera-3);
 	max-width: 68ch;
+}
+
+strong {
+	font-weight: var(--text-rez-zvyraznene);
+}
+
+ul {
+	margin: 0 0 var(--mezera-3);
+	padding-left: var(--mezera-3);
+	max-width: 68ch;
+}
+
+ul li + li {
+	margin-top: var(--mezera-1);
 }
 
 a {
@@ -395,4 +413,12 @@ main {
    na desktopu skryl spolu s .about-nadpis-sekce. Jen vizuální odstup shora. */
 .about-kvalifikace {
 	margin-top: var(--mezera-3);
+}
+
+/* ---------- textová stránka (Ochrana osobních údajů, Impressum) — úkol 1 ---------- */
+/* h1, h2 { margin: 0 0 var(--mezera-3) } řeší jen mezeru POD nadpisem. Ochrana
+   osobních údajů řetězí sedm h2 sekcí za sebou — bez mezery NAD nadpisem by
+   nalepovaly na předchozí odstavec. Sdílí ji Ochrana osobních údajů i Impressum. */
+.textova-stranka h2 {
+	margin-top: var(--mezera-6);
 }
