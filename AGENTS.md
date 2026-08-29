@@ -111,6 +111,44 @@ výchozím `failOn: 'warning'`, normalizace klíčových slov z `exifr`) jsou
 v `0_Projects/web-michalhartman/plans/2026-08-29-faze-3-zpracovani-a-index.md`
 v repu PACT.
 
+## Publikace fotek (fáze 4)
+
+`scripts/publikovat-fotky` — publikační skript pro Mac. Celý úkon publikace
+je: Publish v Lightroomu, spustit tenhle skript.
+
+```
+./scripts/publikovat-fotky [--intake CESTA] [--server ADRESA]
+```
+
+Projde intake složku rekurzivně (jen `.jpg`/`.jpeg`), spočítá otisk
+(`shasum -a 256`) každé fotky, zeptá se `GET /admin/files`, co server už má,
+pošle rozdíl po jedné (`POST /admin/upload`), zavolá `POST /admin/rebuild`
+(jen když bylo co poslat) a vypíše souhrn z `GET /admin/report`.
+
+- **Čistý bash + curl**, žádný Node, žádný Python — spouští se párkrát
+  ročně a musí přežít aktualizaci macOS. Cíleně kompatibilní s výchozím
+  systémovým `/bin/bash` (macOS drží verzi 3.2 kvůli licenci) — žádná
+  asociativní pole ani jiné bashismy 4+.
+- **Nedrží žádný stav.** Zdrojem pravdy je vždy server — funguje z
+  jakéhokoliv počítače a přerušený běh naváže sám při dalším spuštění.
+- **Aditivní přenos** — nikdy nic nemaže podle toho, co v intake složce
+  chybí.
+- Slugifikace cesty na klíč (funkce `path_to_key` ve skriptu) musí přesně
+  sedět s `server/slug.js` — jinak skript nepozná, že server fotku už má,
+  a bude ji posílat pořád dokola. Ověřeno na všech 169 reálných souborech
+  v `~/Pictures/MH-web/GalleryMedia` proti `pathToKey()` ze serveru
+  (shoda 100 %, včetně souboru s mezerou v názvu a souborů v podsložkách).
+- Výchozí intake složka: `~/Pictures/MH-web/GalleryMedia` (jen ke čtení —
+  skript do ní nikdy nezapisuje). Výchozí server: produkce
+  (`https://new.michalhartman.com`). Obojí jde přepsat parametrem nebo
+  proměnnou prostředí `PUBLIKOVAT_FOTKY_INTAKE` / `PUBLIKOVAT_FOTKY_SERVER`.
+- Token se čte z klíčenky (`security find-generic-password -s
+  michalhartman-web-admin -w`), skript ho nikdy nevypisuje. Chybějící
+  token skončí jasnou hláškou, ne pádem.
+- Skončí nenulovým návratovým kódem, kdykoliv `/admin/report` hlásí
+  `selhalo > 0`, nebo když v tomhle běhu selhal upload/rebuild — i když
+  jednotlivá selhaná fotka běh sama o sobě nezastaví.
+
 ## Co agent nesmí
 
 - číst ani commitovat `.env` a jiné soubory s klíči,
