@@ -95,6 +95,10 @@ serveru počítadlo vynuluje.
 - `GET /admin/report` — kontrolní výpis: souhrn (uloženo/v indexu/selhalo/bez
   klíčových slov), klíčová slova podle počtu od nejvzácnějších, fotky bez
   klíčových slov, selhané fotky, kolize klíčů, duplicitní obsah (`server/adminReport.js`).
+- `POST /admin/forget?klic=<klíč>` — smaže fotku ze serveru natrvalo
+  (originál, odvozené velikosti, záznam), pak přeskládá index. Fáze 7,
+  detaily (validace proti existujícím záznamům, mazání osiřelých velikostí)
+  viz sekce „Obrazovky správy (fáze 7)" níže.
 
 Poškozený/chybějící `index.json` se přebuduje sám při startu serveru
 (`ensureIndexHealthy()` v `server.js`).
@@ -230,6 +234,87 @@ Klíčové slovo `MH-gallery-index-*` zatím nemá žádná fotka — na produkc
 uplatní kaskáda (krok 2) pro Skotsko a Řecko. Francie nemá zatím žádnou
 fotku vůbec, dlaždice je bez obrázku a `/france/` je prázdná galerie —
 očekávaný stav, ne chyba.
+
+## Obrazovky správy (fáze 7)
+
+`/admin` — jediná obrazovka, na kterou se chodí, když něco nesedí (v devíti
+případech z deseti hlavní rozhraní je výpis `scripts/publikovat-fotky`).
+Diagnostika a záchrana, ne každodenní nástroj. Statická Astro stránka
+(`src/pages/admin.astro`) bez `<Base>` (žádná hlavička/patička webu — je to
+pracovní nástroj, ne prezentace), s vlastním klientským JS, které se přepíná
+mezi třemi sekcemi (Stav knihovny / Klíčová slova / Najít fotku) — žádné
+samostatné URL, žádný reload.
+
+**Tvrdé pravidlo: token se nikde neukládá.** Ani `localStorage`, ani
+`sessionStorage`, ani cookie — stránky `/cookies/` a `/privacy-policy/`
+tvrdí, že web do zařízení návštěvníka neukládá nic, a to musí platit i tady.
+Token žije jen v proměnné JS na stránce a posílá se v hlavičce
+`Authorization: Bearer <token>` u každého volání; zavřením záložky/reloadem
+mizí a musí se vložit znovu.
+
+`/admin` **není v mapě webu ani v navigaci** (žádná stránka na něj
+neodkazuje) a má `<meta name="robots" content="noindex, nofollow">`.
+
+**Routing v `server.js`:** statický `dist/admin/` se servíruje BEZ tokenu,
+zapojený PŘED admin routerem — jinak by `requireAdminToken` (mountovaný přes
+`adminRouter.use(...)`) odmítl i načtení samotné stránky, dřív, než by šlo
+token vůbec zadat. Volání jako `/admin/stav` nebo `/admin/report` tou
+statickou vrstvou jen protečou (žádný soubor toho jména v `dist/admin/`
+neexistuje) až k routeru s tokenem pod ní.
+
+**`POST /admin/forget?klic=<klíč>`** — smaže fotku ze serveru natrvalo:
+originál, všechny odvozené velikosti (i případné osiřelé, viz níže) a záznam
+(úspěšný i neúspěšný), pak přeskládá index (`force: true` — úbytek je tu
+vždy vědomý). Jádro je `forgetPhoto()` v `server/adminForget.js`, čistá
+funkce testovatelná bez mockování Express req/res (stejný precedens jako
+`rebuildIndex`).
+
+- **Vstup se validuje proti seznamu existujících záznamů**
+  (`readAllPhotoRecords()` + `readAllFailedRecords()` — hledá se v obou,
+  aby šla smazat i fotka, jejíž zpracování selhalo). Cesta na disku se
+  NIKDY neskládá zřetězením s tím, co pošle klient — teprve po nalezení
+  klíče mezi existujícími záznamy se pracuje s klíčem z toho nalezeného
+  záznamu (stejný přístup jako `POST /admin/upload`, viz `upload.js`).
+- Neplatný tvar klíče (např. `../`) → 400 dřív, než se cokoliv čte ze
+  záznamů. Neexistující (ale tvarem platný) klíč → 404.
+- Odvozené velikosti se mažou podle skutečného obsahu `derived/`, ne jen
+  podle toho, co „ví" záznam (`record.odvozene`) — u fotky s přerušeným
+  zpracováním mohla podle poznámky v `deriveImages.js` („nikdy sama
+  neuklízí") vzniknout osiřelá velikost bez záznamu. Bezpečné: klíč nikdy
+  neobsahuje `_` (viz `slug.js`), takže prefix `<klíč>_` nemůže zasáhnout
+  jiný, podobně pojmenovaný klíč.
+
+**Obrazovka „Najít fotku"** hledá jen v klíči (ne v obrázcích — rozhraní
+není prohlížeč fotek). Zdroj dat je kombinace `GET /api/index.json`
+(veřejné, úspěšně zpracované fotky — nese `klicovaSlova`/`odvozene`) a
+`selhaneFotky` z `GET /admin/report` (fotky, které nikdy nedostaly úspěšný
+záznam, takže v indexu nejsou) — jinak by se přes tuhle obrazovku nedala
+najít a smazat fotka, jejíž zpracování selhalo. „V jakých galeriích" počítá
+stejnou funkcí shody (`odpovidaKlicovemuSlovu` z `src/lib/fotky.ts`) jako
+skutečné stránky galerií, aby se admin obrazovka nikdy neodchýlila od toho,
+co se opravdu zobrazí.
+
+**Obrazovka „Klíčová slova"** zvýrazňuje **počet 1, ne „chyba"** — slovo na
+jediné fotce může být v pořádku, obrazovka netvrdí jistotu, kterou nemá.
+Klíčová slova s prefixem `MH-` (funkční značky, např.
+`MH-gallery-index-scotland`) se počítají v samostatné tabulce, aby mezi
+podezřelými nepřekážela.
+
+**Prázdná sekce na Obrazovce „Stav knihovny" se ukazuje taky**, jako klidná
+věta („Žádné — každá fotka má vlastní klíč.") — kdyby zmizela, nešlo by
+poznat rozdíl mezi „zkontrolováno a v pořádku" a „nezkontrolováno".
+`selhalo`/`kolize klíčů` se zvýrazňují jako chyba (`--barva-zvyrazneni`),
+`bez klíčových slov`/`duplicitní obsah` jako upozornění
+(`--barva-akcent-tlumeny`) — vědomá výjimka z DESIGN.md sekce 3 („nikdy dva
+akcenty na jedné obrazovce"), nutná k tomu, aby diagnostická obrazovka vůbec
+uměla ukázat rozdíl mezi „jistá chyba" a „jen se podívej". Oba tóny jsou
+existující tokeny, žádný nový hex kód.
+
+**Dynamický obsah (`innerHTML` v `<script>`) a scoped styly se nepotkávají**
+— Astro přidává scopovací atribut (`data-astro-cid-*`) jen prvkům
+přítomným v šabloně při buildu, ne prvkům vzniklým za běhu. Proto má
+`admin.astro` `<style is:global>`, ne scoped `<style>` — všechny třídy mají
+předponu `admin-`, riziko kolize s `global.css` je nulové.
 
 ## Co agent nesmí
 
