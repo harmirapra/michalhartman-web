@@ -140,9 +140,11 @@ SERVER_DEFAULT="https://new.michalhartman.com"
 INTAKE_INPUT="${PUBLIKOVAT_FOTKY_INTAKE:-$INTAKE_DEFAULT}"
 SERVER_INPUT="${PUBLIKOVAT_FOTKY_SERVER:-$SERVER_DEFAULT}"
 
+SKIP_INTAKE_CONFIRM=0
+
 print_help() {
 	cat <<EOF
-Použití: $(basename "$0") [--intake CESTA] [--server ADRESA]
+Použití: $(basename "$0") [--intake CESTA] [--server ADRESA] [--preskocit-potvrzeni-intake]
 
 Projde intake složku, spočítá otisky fotek, zeptá se serveru, co už má,
 pošle rozdíl, zavolá rebuild indexu a vypíše souhrn.
@@ -150,6 +152,15 @@ pošle rozdíl, zavolá rebuild indexu a vypíše souhrn.
   --intake CESTA   Kořen intake složky (výchozí: $INTAKE_DEFAULT)
   --server ADRESA  Adresa serveru, bez lomítka na konci
                     (výchozí: $SERVER_DEFAULT)
+
+  --preskocit-potvrzeni-intake
+                    Přeskočí potvrzovací otázku, když --intake míří
+                    jinam než na výchozí složku (viz níže). Určeno pro
+                    neinteraktivní spouštění (cron apod.) — bez terminálu
+                    a bez tohohle přepínače skript v takovém případě
+                    skončí chybou, aby náhodou nenahrál fotky znovu jako
+                    duplikáty.
+
   -h, --help       Tahle nápověda
 
 Totéž jde nastavit proměnnými prostředí PUBLIKOVAT_FOTKY_INTAKE
@@ -157,6 +168,12 @@ a PUBLIKOVAT_FOTKY_SERVER.
 
 Token se čte z klíčenky (položka "michalhartman-web-admin"), skript ho
 nikdy nevypisuje.
+
+Pozor na --intake: klíč fotky se odvozuje z cesty relativně ke kořeni
+intake složky. Když použiješ jiný kořen než obvykle (třeba podsložku
+místo celé složky), stejná fotka dostane jiný klíč a server ji nahraje
+znovu jako duplikát. Skript na to při jiném kořenu upozorní a čeká na
+potvrzení, pokud nepoužiješ --preskocit-potvrzeni-intake.
 EOF
 }
 
@@ -176,6 +193,10 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--server=*)
 			SERVER_INPUT="${1#--server=}"
+			shift
+			;;
+		--preskocit-potvrzeni-intake)
+			SKIP_INTAKE_CONFIRM=1
 			shift
 			;;
 		-h | --help)
@@ -206,6 +227,66 @@ if [[ ! -d "$INTAKE_INPUT" ]]; then
 	exit 1
 fi
 INTAKE="$(cd "$INTAKE_INPUT" && pwd)"
+
+# ---------------------------------------------------------------------------
+# Varování, když --intake míří jinam než na výchozí složku. Klíč fotky se
+# počítá z cesty relativně ke kořeni intake složky (viz path_to_key výš) —
+# jiný kořen proto znamená jiné klíče pro tytéž fotky a server je nahraje
+# znovu jako duplikáty (viz commit message / popis v repu, případ z 29. 8. 2026
+# se složkou Scottland).
+#
+# Porovnávají se normalizované absolutní cesty (přes `cd && pwd`), ne syrové
+# řetězce — "~/Pictures/MH-web/GalleryMedia", "$HOME/Pictures/MH-web/GalleryMedia"
+# a cesta s koncovým lomítkem musí vyjít jako shodné a nemají vyvolat varování.
+if [[ -d "$INTAKE_DEFAULT" ]]; then
+	INTAKE_DEFAULT_NORM="$(cd "$INTAKE_DEFAULT" && pwd)"
+else
+	# Výchozí složka by měla existovat vždycky, ale kdyby náhodou ne,
+	# ať porovnání nespadne — jen bez rozbalení symlinků, aspoň bez
+	# koncového lomítka.
+	INTAKE_DEFAULT_NORM="${INTAKE_DEFAULT%/}"
+fi
+
+if [[ "$INTAKE" != "$INTAKE_DEFAULT_NORM" ]]; then
+	{
+		echo
+		echo "${C_WARN}${C_BOLD}Pozor: jiná intake složka, než je výchozí.${C_RESET}"
+		echo
+		echo "  Výchozí: ${C_MUTE}$INTAKE_DEFAULT_NORM${C_RESET}"
+		echo "  Použije se: ${C_BOLD}$INTAKE${C_RESET}"
+		echo
+		echo "Klíč každé fotky se počítá z cesty ${C_BOLD}relativně ke kořeni${C_RESET}"
+		echo "intake složky. Když je teď kořen jiný (třeba jen podsložka místo"
+		echo "celé složky), vyjde každé fotce ${C_BOLD}jiný klíč${C_RESET}, než kdyby se"
+		echo "poslala z výchozí složky. Server takový klíč nezná, takže fotku"
+		echo "${C_BOLD}nahraje znovu${C_RESET} — v galerii se objeví dvakrát."
+		echo
+		echo "Když teď potvrdíš, skript bude pokračovat s touto (jinou) složkou"
+		echo "a fotky pod ní pošle pod klíči odvozenými od ní."
+		echo
+	} >&2
+
+	if [[ "$SKIP_INTAKE_CONFIRM" -eq 1 ]]; then
+		echo "${C_MUTE}Potvrzení přeskočeno (--preskocit-potvrzeni-intake), pokračuji.${C_RESET}" >&2
+		echo >&2
+	else
+		if [[ ! -t 0 ]]; then
+			echo "${C_ERR}Skript neběží v terminálu, potvrzení nejde vyžádat.${C_RESET}" >&2
+			echo "Spusť ho interaktivně, nebo přidej --preskocit-potvrzeni-intake," >&2
+			echo "pokud je jiný kořen intake složky záměr." >&2
+			exit 1
+		fi
+		read -r -p "Pokračovat s touto intake složkou? [y/N] " INTAKE_CONFIRM
+		case "$INTAKE_CONFIRM" in
+			y | Y) ;;
+			*)
+				echo "${C_MUTE}Zrušeno, nic se nenahrálo.${C_RESET}" >&2
+				exit 1
+				;;
+		esac
+		echo >&2
+	fi
+fi
 
 # ---------------------------------------------------------------------------
 # Token z klíčenky. Nikdy se nevypisuje — ani v chybové hlášce, ani v -x.
