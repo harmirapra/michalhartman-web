@@ -18,22 +18,35 @@ function probeFileName() {
 	return path.join(TMP_DIR, `.zapisovatelnost-${process.pid}-${Date.now()}`);
 }
 
-// Volá se jednou při startu. Když do TMP_DIR nejde zapisovat, server má
-// selhat hlasitě hned — ne tiše běžet dál a padat až při prvním uploadu.
-function ensureDataDirs() {
-	for (const dir of ALL_DIRS) {
-		fs.mkdirSync(dir, { recursive: true });
-	}
+// Volá se jednou při startu. Zjistí, jestli je úložiště připravené, a výsledek
+// si zapamatuje — ale NIKDY kvůli tomu neshodí server.
+//
+// Původně tady byl `throw`. Bylo to špatně: statický web nemá s úložištěm fotek
+// nic společného, takže nedostupný disk shodil i stránky, které ho nepotřebují.
+// Navíc se to projeví jako restartující se kontejner, tedy nejhůř
+// diagnostikovatelný způsob selhání. Nedostupný disk teď vypne jen `/admin/*`,
+// zbytek webu běží dál.
+let storageError = null;
 
-	const probePath = probeFileName();
+function ensureDataDirs() {
 	try {
+		for (const dir of ALL_DIRS) {
+			fs.mkdirSync(dir, { recursive: true });
+		}
+		const probePath = probeFileName();
 		fs.writeFileSync(probePath, '');
 		fs.unlinkSync(probePath);
+		storageError = null;
 	} catch (err) {
-		throw new Error(
-			`Datový adresář "${TMP_DIR}" není zapisovatelný (DATA_DIR="${DATA_DIR}"): ${err.message}`,
-		);
+		storageError = `Datový adresář "${TMP_DIR}" není použitelný (DATA_DIR="${DATA_DIR}"): ${err.message}`;
+		console.error(`[úložiště] ${storageError}`);
+		console.error('[úložiště] /admin/* bude vracet 503, zbytek webu běží dál.');
 	}
+}
+
+// Null = úložiště je v pořádku.
+function getStorageError() {
+	return storageError;
 }
 
 // Diagnostika pro GET /admin/stav — jestli je disk zapisovatelný, kolik je
@@ -74,5 +87,6 @@ export {
 	STATE_FAILED_DIR,
 	TMP_DIR,
 	ensureDataDirs,
+	getStorageError,
 	getStorageStatus,
 };

@@ -18,6 +18,7 @@
 // ne celoživotní součet. Čtyři neúspěchy rozházené po dnech nikoho neblokují.
 
 import crypto from 'node:crypto';
+import { getStorageError } from './dataDir.js';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const BLOCK_DURATION_MS = 60_000; // 1 minuta
@@ -103,6 +104,13 @@ function requireAdminToken(req, res, next) {
 			error: 'admin_disabled',
 			message: 'ADMIN_TOKEN není v prostředí nastaven.',
 		});
+		return;
+	}
+
+	// Bez použitelného úložiště nemá /admin/* co dělat — ale web běží dál.
+	const storageError = getStorageError();
+	if (storageError) {
+		respondAndClose(req, res, 503, { error: 'storage_unavailable', message: storageError });
 		return;
 	}
 
