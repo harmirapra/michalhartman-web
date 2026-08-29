@@ -39,6 +39,7 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 		type Fotka,
 		type Index,
 	} from "../lib/fotky";
+	import { priZmeneSirky, usporadejDoRadku, type PolozkaSPomerem } from "../lib/radky";
 
 	// Kolik prvních fotek (po zamíchání) se má načíst hned, ne lazy — týká se
 	// těch, co jsou vidět bez scrollování. Musí jich být dost na první řádek,
@@ -99,9 +100,6 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 		odkaz.dataset.pswpHeight = String(vyska);
 		odkaz.setAttribute("itemscope", "");
 		odkaz.setAttribute("itemtype", "https://schema.org/ImageObject");
-		// flex-grow úměrný poměru stran — viz .media-galerie-polozka
-		// v global.css (--polozka-pomer).
-		odkaz.style.setProperty("--polozka-pomer", String(sirka / vyska));
 
 		const img = document.createElement("img");
 		img.src = url600;
@@ -167,15 +165,22 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 		const nazevGalerie = document.querySelector("h1")?.textContent?.trim() || klicoveSlovo;
 		const promichane = zamichej(shoda);
 
-		const fragment = document.createDocumentFragment();
-		promichane.forEach((fotka, i) => {
-			fragment.appendChild(vytvorPolozku(fotka, i, nazevGalerie, popisky));
-		});
-		kontejner.appendChild(fragment);
+		const polozky: PolozkaSPomerem[] = promichane.map((fotka, i) => ({
+			prvek: vytvorPolozku(fotka, i, nazevGalerie, popisky),
+			pomer: fotka.rozmery!.sirka / fotka.rozmery!.vyska,
+		}));
 
 		if (!kontejner.id) {
 			kontejner.id = `media-galerie-${poradi}`;
 		}
+
+		// Skládá fotky do zarovnaných řádků (viz src/lib/radky.ts) — dopočítává
+		// se výška řádku, ne šířka fotky, takže se fotky jen zmenšují, nikdy
+		// neořezávají. Musí proběhnout znovu při resize (jiná šířka kontejneru
+		// = jiné složení řádků).
+		const prekresli = () =>
+			usporadejDoRadku(kontejner, polozky, "--galerie-radek-vyska", "--galerie-radek-mezera", "media-galerie-radek");
+		prekresli();
 
 		const lightbox = new PhotoSwipeLightbox({
 			gallery: `#${kontejner.id}`,
@@ -188,6 +193,8 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 			// tlačítko stažení, jen se sem záměrně nepřidává (žádný plugin).
 		});
 		lightbox.init();
+
+		priZmeneSirky(prekresli);
 	}
 
 	document.querySelectorAll<HTMLElement>(".media-galerie").forEach((kontejner, poradi) => {

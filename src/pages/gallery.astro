@@ -60,6 +60,7 @@ const DLAZDICE: Dlazdice[] = [
 
 <script>
 	import { jeZobrazitelna, nacistIndex, odpovidaKlicovemuSlovu, urlOdvozene, type Fotka } from "../lib/fotky";
+	import { priZmeneSirky, usporadejDoRadku, type PolozkaSPomerem } from "../lib/radky";
 
 	// Dlaždice jsou vždy jen tři a vždy nad ohybem stránky — eager pro
 	// všechny, žádná potřeba lazy prahu jako u mřížky celé galerie.
@@ -93,10 +94,6 @@ const DLAZDICE: Dlazdice[] = [
 		const url600 = urlOdvozene(fotka, 600)!;
 		const url1200 = urlOdvozene(fotka, 1200)!;
 
-		// flex-grow úměrný poměru stran — stejný trik jako
-		// .media-galerie-polozka (viz global.css, --polozka-pomer).
-		dlazdice.style.setProperty("--polozka-pomer", String(sirka / vyska));
-
 		const img = document.createElement("img");
 		img.src = url600;
 		img.srcset = `${url600} 600w, ${url1200} 1200w`;
@@ -113,8 +110,11 @@ const DLAZDICE: Dlazdice[] = [
 	}
 
 	async function vykresliRozcestnik() {
-		const vsechnyDlazdice = document.querySelectorAll<HTMLAnchorElement>(".rozcestnik-dlazdice");
-		if (vsechnyDlazdice.length === 0) return;
+		const kontejnerRadek = document.querySelector<HTMLElement>(".rozcestnik-dlazdice-radek");
+		const vsechnyDlazdice = Array.from(
+			document.querySelectorAll<HTMLAnchorElement>(".rozcestnik-dlazdice"),
+		);
+		if (!kontejnerRadek || vsechnyDlazdice.length === 0) return;
 
 		let index: Awaited<ReturnType<typeof nacistIndex>>;
 		try {
@@ -129,7 +129,10 @@ const DLAZDICE: Dlazdice[] = [
 
 		const vsechnyFotky = Array.isArray(index.fotky) ? index.fotky : [];
 
-		vsechnyDlazdice.forEach((dlazdice) => {
+		// Dlaždice bez fotky (Francie) do skládání řádků pořád patří — jen s
+		// poměrem 1 (čtverec), aby si mezi ostatními fotkami nesla svůj podíl
+		// šířky stejně jako dřív (výchozí flex-grow: 1).
+		const polozky: PolozkaSPomerem[] = vsechnyDlazdice.map((dlazdice) => {
 			const slug = dlazdice.dataset.slug ?? "";
 			const klicGalerie = dlazdice.dataset.klicGalerie ?? "";
 			const popisekEl = dlazdice.querySelector(".rozcestnik-dlazdice-popisek");
@@ -143,13 +146,29 @@ const DLAZDICE: Dlazdice[] = [
 
 			if (fotka) {
 				vlozObrazek(dlazdice, fotka, nazev);
-			} else {
-				// Žádná hláška, žádná chyba — jen dlaždice bez obrázku na tmavé
-				// ploše (viz .rozcestnik-dlazdice--bez-obrazku v global.css).
-				// Odkaz zůstává funkční, je statický z HTML výš.
-				dlazdice.classList.add("rozcestnik-dlazdice--bez-obrazku");
+				return { prvek: dlazdice, pomer: fotka.rozmery!.sirka / fotka.rozmery!.vyska };
 			}
+
+			// Žádná hláška, žádná chyba — jen dlaždice bez obrázku na tmavé
+			// ploše (viz .rozcestnik-dlazdice--bez-obrazku v global.css).
+			// Odkaz zůstává funkční, je statický z HTML výš.
+			dlazdice.classList.add("rozcestnik-dlazdice--bez-obrazku");
+			return { prvek: dlazdice, pomer: 1 };
 		});
+
+		// Skládá dlaždice do zarovnaných řádků (viz src/lib/radky.ts) — stejný
+		// mechanismus jako stránka galerie, jen s vlastní cílovou výškou. Musí
+		// proběhnout znovu při resize (jiná šířka kontejneru = jiné řádky).
+		const prekresli = () =>
+			usporadejDoRadku(
+				kontejnerRadek,
+				polozky,
+				"--rozcestnik-dlazdice-vyska",
+				"--galerie-radek-mezera",
+				"rozcestnik-dlazdice-radek-vnitrni",
+			);
+		prekresli();
+		priZmeneSirky(prekresli);
 	}
 
 	vykresliRozcestnik();
