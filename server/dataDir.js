@@ -8,11 +8,17 @@ import path from 'node:path';
 const DATA_DIR = process.env.DATA_DIR || '/data';
 
 const ORIGINALS_DIR = path.join(DATA_DIR, 'originals');
+const DERIVED_DIR = path.join(DATA_DIR, 'derived');
+const STATE_DIR = path.join(DATA_DIR, 'state');
 const STATE_PHOTOS_DIR = path.join(DATA_DIR, 'state', 'photos');
 const STATE_FAILED_DIR = path.join(DATA_DIR, 'state', 'failed');
 const TMP_DIR = path.join(DATA_DIR, 'tmp');
+// Fáze 3: servírovaný index a log kolizí klíčů žijí přímo ve state/, ne
+// v podsložce — jsou to jednotlivé soubory, ne kolekce záznamů po fotkách.
+const INDEX_PATH = path.join(STATE_DIR, 'index.json');
+const KOLIZE_PATH = path.join(STATE_DIR, 'kolize.json');
 
-const ALL_DIRS = [ORIGINALS_DIR, STATE_PHOTOS_DIR, STATE_FAILED_DIR, TMP_DIR];
+const ALL_DIRS = [ORIGINALS_DIR, DERIVED_DIR, STATE_PHOTOS_DIR, STATE_FAILED_DIR, TMP_DIR];
 
 function probeFileName() {
 	return path.join(TMP_DIR, `.zapisovatelnost-${process.pid}-${Date.now()}`);
@@ -83,9 +89,13 @@ async function getStorageStatus() {
 export {
 	DATA_DIR,
 	ORIGINALS_DIR,
+	DERIVED_DIR,
+	STATE_DIR,
 	STATE_PHOTOS_DIR,
 	STATE_FAILED_DIR,
 	TMP_DIR,
+	INDEX_PATH,
+	KOLIZE_PATH,
 	ensureDataDirs,
 	getStorageError,
 	getStorageStatus,

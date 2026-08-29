@@ -22,6 +22,7 @@ npm run dev           # vývojový server, http://localhost:4321
 npm run build         # sestavení do dist/
 npm start             # tenký server (server.js) nad hotovým dist/ — jako na produkci
 npm run check:links   # kontrola, že žádný odkaz nevede do prázdna
+npm test              # testy serverového kódu (node:test), viz server/__tests__/
 ```
 
 `npm start` spouští `server.js` — vlastní tenký Express server, který servíruje
@@ -30,8 +31,13 @@ portu z proměnné `PORT` (výchozí `4321`), zapíná gzip/Brotli kompresi a na
 neznámé cestě vrací 404.
 
 Od fáze 2 server navíc obsluhuje `/admin/*` (kód v `server/`) — trvalý disk
-a příjem fotek, viz sekce níže. `/photos/*` a `/api/index.json` přijdou až
-ve fázi 3.
+a příjem fotek. Fáze 3 přidává zpracování fotek (metadata + náhledy),
+servírovaný index a `/photos/*` — viz sekce níže.
+
+`npm test` běží nad dočasným `DATA_DIR` (skript si ho sám vytvoří přes
+`mktemp -d`, nikdy nesahá na `/data`) a zamyšlené soubory z
+`~/Pictures/MH-web/GalleryMedia` používá jen ke čtení — pokud tahle sada na
+stroji chybí, testy, které na ní stojí, se přeskočí, ne spadnou.
 
 ## Deploy
 
@@ -55,7 +61,7 @@ Etapa 2 přidává:
   <token>`). Chybí-li, `/admin/*` je celé nedostupné (503). Nikdy nepatří
   do repa.
 
-## `/admin/*` (fáze 2)
+## `/admin/*` (fáze 2 + 3)
 
 Chráněné endpointy, token se ověřuje dřív, než server přečte tělo
 požadavku (viz `server/adminAuth.js`). Neúspěšné pokusy o autorizaci se
@@ -67,15 +73,42 @@ serveru počítadlo vynuluje.
   klíč se ještě zvlášť ověří proti povolenému tvaru (`a-z0-9-`) — cesta na
   disku se nikdy neskládá zřetězením s tím, co pošle klient. Uloží fotku do
   `$DATA_DIR/originals/<klíč>.jpg` přes dočasný soubor s náhodnou příponou
-  a přejmenování. Vrací klíč, sha256 otisk (spočtený serverem z přijatých
-  dat) a velikost.
+  a přejmenování a **hned po uložení ji zpracuje** (`server/photoProcessing.js`):
+  přečte XMP metadata (`server/metadata.js`), vygeneruje tři odvozené
+  velikosti WebP (`server/deriveImages.js`) a zapíše záznam
+  `state/photos/<klíč>.json` jako úplně poslední krok. Selhání zpracování
+  (typicky poškozený/useknutý soubor) NENÍ selhání uploadu — originál je
+  uložený v pořádku, jen se nezpracoval; jde do `state/failed/<klíč>.json`
+  s otiskem, aby se stejný obsah nezkoušel zpracovat pořád dokola. Odpověď
+  nese `zpracovano: boolean` a při neúspěchu `chyba`.
 - `GET /admin/stav` — diagnostika úložiště: jde zapisovat, kolik je tam
-  originálů, kolik zbývá místa. (Tohle není report o obsahu knihovny —
-  ten přijde ve fázi 3 jako `/admin/report`.)
+  originálů, kolik zbývá místa.
+- `GET /admin/files` — mapa klíč → otisk **ze záznamů**
+  `state/photos/*.json`, nikdy z výpisu `originals/` — jinak by fotka
+  uložená, ale nezpracovaná, byla navždy neviditelná pro skript, který
+  porovnává, co ještě chybí poslat.
+- `POST /admin/rebuild[?force=true]` — poslepí `index.json` ze záznamů
+  (`server/mediaIndex.js`), zápis přes `write-file-atomic`. Nic
+  nezpracovává — žádná „opravná role“. Pojistka: je-li nový index pod ~80 %
+  počtu fotek v současném indexu, výměna se odmítne (409), dá se vynutit
+  `?force=true`.
+- `GET /admin/report` — kontrolní výpis: souhrn (uloženo/v indexu/selhalo/bez
+  klíčových slov), klíčová slova podle počtu od nejvzácnějších, fotky bez
+  klíčových slov, selhané fotky, kolize klíčů, duplicitní obsah (`server/adminReport.js`).
 
-Co ve fázi 2 záměrně chybí: čtení metadat, náhledy, index, `/photos/*`,
-`GET /admin/files`, mazání. Viz
-`0_Projects/web-michalhartman/plans/2026-08-29-faze-2-disk-a-prijem-fotek.md`
+Poškozený/chybějící `index.json` se přebuduje sám při startu serveru
+(`ensureIndexHealthy()` v `server.js`).
+
+`GET /api/index.json` (mimo `/admin/*`, bez tokenu) vrací index s hlavičkou
+`Cache-Control: no-cache` — mění se při rebuildu, nesmí se cachovat na edge.
+
+`/photos/*` servíruje `$DATA_DIR/derived/` s roční `immutable` cache — název
+souboru nese otisk obsahu, takže je to bezpečné. `originals/` server ven
+nikdy neexpozuje.
+
+Detaily mechaniky (pořadí kroků při zpracování, proč `sharp` zůstává na
+výchozím `failOn: 'warning'`, normalizace klíčových slov z `exifr`) jsou
+v `0_Projects/web-michalhartman/plans/2026-08-29-faze-3-zpracovani-a-index.md`
 v repu PACT.
 
 ## Co agent nesmí
@@ -112,6 +145,7 @@ pull → branch → změna → diff → commit → push → pull request
 
 Před mergem musí platit všechno:
 
+- [ ] `npm test` proběhne bez chyby,
 - [ ] `npm run build` proběhne bez chyby,
 - [ ] `npm run check:links` nenajde rozbitý odkaz,
 - [ ] náhledová URL je otevřená a zkontrolovaná člověkem,

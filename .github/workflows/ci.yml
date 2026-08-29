@@ -22,6 +22,9 @@ jobs:
       - name: Nainstalovat závislosti
         run: npm ci
 
+      - name: Otestovat serverový kód
+        run: npm test
+
       - name: Sestavit web
         run: npm run build
 
