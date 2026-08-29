@@ -185,12 +185,51 @@ v galerii hned po `POST /admin/rebuild`, bez nového buildu/deploye.
 Stránka `/scotland/` (`src/pages/scotland.astro`) je první, co komponentu
 používá — `klicoveSlovo="Scotland"`. `<h1>` je v HTML kvůli SEO
 a odečítačům, ale vizuálně skrytý třídou `.vizualne-skryty` (`clip-path`,
-nikdy `display: none`). Odkaz „Galerie" v drobečkové navigaci je zatím
-`.odkaz-vzhled` span, ne `<a>` — rozcestník `/gallery/` vzniká až ve fázi 6.
+nikdy `display: none`).
 
-Rozcestník `/gallery/` a další galerie (`/greece/`, `/france/`) jsou fáze 6.
+Sdílené typy a pomocné funkce nad indexem (`urlOdvozene`, `jeZobrazitelna`,
+`odpovidaKlicovemuSlovu`, `nacistIndex`) jsou od fáze 6 v `src/lib/fotky.ts` —
+používá je jak `MediaGalerie.astro`, tak rozcestník `/gallery/`, aby se
+pravidlo shody klíčového slova a filtr zobrazitelnosti nerozjely do dvou kopií.
+
 Ostatní layouty z architektury (`mrizka`, `zdivo`, `mozaika`, `karusel`) se
 přidají, až je bude nějaká galerie potřebovat.
+
+## Rozcestník galerií (fáze 6)
+
+`/gallery/` (`src/pages/gallery.astro`), plus stránky `/greece/` a `/france/`
+podle vzoru `/scotland/`. Odkaz „Galerie" v hlavičce a v drobečkové
+navigaci je od téhle fáze funkční `<a>` na všech stránkách (dřív
+`.odkaz-vzhled` span).
+
+Dlaždice rozcestníku má tři části ze **tří různých zdrojů** — jádro
+rozhodnutí fáze 6:
+
+- **obrázek** — z metadat, klíčové slovo `MH-gallery-index-<slug>`
+  (`slug` = `greece`/`scotland`/`france`). Kaskáda: 1) fotka s tímhle
+  klíčovým slovem, 2) když žádná není, fotka s klíčovým slovem galerie
+  (`Greece`/`Scotland`/`France`), 3) když ani ta ne, dlaždice bez obrázku
+  (`.rozcestnik-dlazdice--bez-obrazku`, jen název na tmavé ploše, odkaz dál
+  funguje). Víc kandidátů v jednom kroku → bere se první podle klíče
+  (abecedně) — **stabilní výběr, ne náhodný** (na rozdíl od pořadí uvnitř
+  stránky galerie, které se schválně míchá znovu při každém načtení).
+- **popisek** (např. „Skotsko") — staticky ze stránky (`DLAZDICE` v
+  `gallery.astro`), ne z Title fotky.
+- **cíl odkazu** (např. `/scotland/`) — staticky ze stránky, ze stejného
+  místa. Navigace nesmí stát na metadatech — omylem označená fotka smí
+  rozbít nejvýš obrázek na dlaždici, nikdy odkaz.
+
+Proto rozcestník **nepoužívá `<MediaGalerie>`** — ta natahuje všechny
+odpovídající fotky a odkazuje na plnou velikost s lightboxem, přesný opak
+toho, co dlaždice potřebuje (jedna fotka, statický odkaz na stránku
+galerie, **klik naviguje, neotevírá lightbox**). Sdílí s ní ale mechanismus
+zarovnané řady (`--polozka-pomer`, token `--rozcestnik-dlazdice-vyska` místo
+`--galerie-radek-vyska`) a pomocné funkce z `src/lib/fotky.ts`.
+
+Klíčové slovo `MH-gallery-index-*` zatím nemá žádná fotka — na produkci se
+uplatní kaskáda (krok 2) pro Skotsko a Řecko. Francie nemá zatím žádnou
+fotku vůbec, dlaždice je bez obrázku a `/france/` je prázdná galerie —
+očekávaný stav, ne chyba.
 
 ## Co agent nesmí
 
@@ -206,7 +245,7 @@ Kdyby na ně vedl odkaz, kontrola odkazů by ho označila jako rozbitý.
 
 | Co chybí | Kde to na originále je | Kdy se doplní |
 |---|---|---|
-| **Galerie** | v navigaci a jako druhý rozcestník na úvodní stránce | Etapa 2 |
+| **Galerie jako druhý rozcestník** | na úvodní stránce (odkaz v navigaci a v drobečkách je od fáze 6 funkční) | zatím mimo rozsah |
 | Ochrana osobních údajů | v patičce | zatím mimo rozsah |
 | Nastavení cookies | v patičce | zatím mimo rozsah |
 | Anglická verze `/en/` | přepínač jazyka v hlavičce | zatím mimo rozsah |

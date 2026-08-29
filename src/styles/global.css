@@ -56,6 +56,11 @@
 	   --mezera-about-gap výš), platí jen na desktopu — na mobilu je jeden
 	   sloupec fotek na plnou šířku (viz .media-galerie níže). */
 	--galerie-radek-vyska: 260px;
+
+	/* Rozcestník galerií (/gallery/) — dlaždice v naměřené výšce, jiná než
+	   --galerie-radek-vyska (rozcestník a stránka jednotlivé galerie jsou
+	   dva různé wireframy s vlastní naměřenou hodnotou). Fáze 6. */
+	--rozcestnik-dlazdice-vyska: 287px;
 }
 
 @media (max-width: 1024px) {
@@ -530,6 +535,94 @@ main.bez-hero {
 		height: auto;
 		width: 100%;
 		flex-grow: 0;
+	}
+}
+
+/* ---------- rozcestník galerií /gallery/ — fáze 6 ---------- */
+/* Nadpis rozcestníku NENÍ nový styl — je to přesně token hero nadpisu
+   (barva, řez, velikost už dává obecné pravidlo h1,h2 výš + barva-hero-nadpis).
+   Jen dva doplňky, protože tenhle nadpis není uvnitř .hero-obsah (tam dělá
+   střed rodičovský flex, ne text-align) — text-align a mírně záporné
+   prostrkání. -0.5px je jednorázová naměřená hodnota (stejný precedens jako
+   .znacka výš), netvoří novou škálu, proto bez tokenu. */
+.rozcestnik-nadpis {
+	color: var(--barva-hero-nadpis);
+	text-align: center;
+	letter-spacing: -0.5px;
+}
+
+/* Řada dlaždic — stejný trik jako .media-galerie (flex-grow úměrný poměru
+   stran přes --polozka-pomer, viz JS v gallery.astro), ale s vlastní výškou
+   (--rozcestnik-dlazdice-vyska) a vycentrovanou řadou — na rozdíl od stránky
+   galerie tu je jen pár dlaždic, ne mřížka přes celou šířku. */
+.rozcestnik-dlazdice-radek {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	justify-content: center;
+	padding: 0 var(--mezera-8);
+}
+
+.rozcestnik-dlazdice {
+	position: relative;
+	display: block;
+	height: var(--rozcestnik-dlazdice-vyska);
+	flex-grow: var(--polozka-pomer, 1);
+}
+
+.rozcestnik-dlazdice img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Kaskáda výběru fotky (viz JS) nenajde nic, dokud galerie nemá ani jednu
+   označenou fotku (Francie) — dlaždice pak nemá <img>, jen tmavou plochu
+   s názvem, a odkaz dál funguje. --barva-oddelovac je jediný existující
+   tmavě šedý token, dost odlišný od čistě černého pozadí stránky, aby šla
+   dlaždice bez fotky vůbec rozeznat. */
+.rozcestnik-dlazdice--bez-obrazku {
+	background: var(--barva-oddelovac);
+}
+
+.rozcestnik-dlazdice-popisek {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 28px 8px 10px;
+	text-align: center;
+	font-size: 13px;
+	font-weight: 300;
+	letter-spacing: 0.6px;
+	color: var(--barva-textu);
+	background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.65) 100%);
+}
+
+@media (max-width: 767px) {
+	.rozcestnik-dlazdice-radek {
+		flex-direction: column;
+		gap: var(--mezera-1);
+		padding: 0 var(--mezera-3);
+	}
+
+	.rozcestnik-dlazdice {
+		height: auto;
+		width: 100%;
+		flex-grow: 0;
+	}
+
+	.rozcestnik-dlazdice img {
+		height: auto;
+	}
+
+	/* Bez fotky nemá dlaždice žádný přirozený poměr stran, který by jí na
+	   mobilu (height: auto) dal výšku — Francie by se jinak smrskla na
+	   výšku popisku. Wireframe tenhle stav nezachycuje (nepočítal s prázdnou
+	   galerií), čtverec je rozumný odhad, ne naměřená hodnota. */
+	.rozcestnik-dlazdice--bez-obrazku {
+		height: 60vw;
 	}
 }
 

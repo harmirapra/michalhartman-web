@@ -31,6 +31,14 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 <script>
 	import PhotoSwipeLightbox from "photoswipe/lightbox";
 	import "photoswipe/style.css";
+	import {
+		jeZobrazitelna,
+		nacistIndex,
+		odpovidaKlicovemuSlovu,
+		urlOdvozene,
+		type Fotka,
+		type Index,
+	} from "../lib/fotky";
 
 	// Kolik prvních fotek (po zamíchání) se má načíst hned, ne lazy — týká se
 	// těch, co jsou vidět bez scrollování. Musí jich být dost na první řádek,
@@ -44,25 +52,6 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 	// global.css).
 	const SIZES = "(max-width: 767px) 100vw, 50vw";
 
-	interface OdvozenaVelikost {
-		velikost: number;
-		soubor: string;
-	}
-
-	interface Fotka {
-		klic: string;
-		rozmery?: { sirka: number; vyska: number };
-		titulek?: string | null;
-		klicovaSlova?: unknown;
-		autor?: string | null;
-		licence?: string | null;
-		odvozene?: OdvozenaVelikost[];
-	}
-
-	interface Index {
-		fotky?: Fotka[];
-	}
-
 	// Fisher-Yates — nové zamíchání při každém načtení stránky (rozhodnutí B0).
 	function zamichej<T>(pole: T[]): T[] {
 		const vysledek = pole.slice();
@@ -71,31 +60,6 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 			[vysledek[i], vysledek[j]] = [vysledek[j], vysledek[i]];
 		}
 		return vysledek;
-	}
-
-	function urlOdvozene(fotka: Fotka, velikost: number): string | null {
-		const zaznam = fotka.odvozene?.find((o) => o.velikost === velikost);
-		return zaznam ? `/photos/${zaznam.soubor}` : null;
-	}
-
-	// Fotka bez rozměrů nebo bez některé odvozené velikosti se vynechá — bez
-	// těchhle dat by nešlo bezpečně nastavit width/height (stránka by
-	// poskakovala) ani napojit lightbox na plnou velikost.
-	function jeZobrazitelna(fotka: Fotka): boolean {
-		return Boolean(
-			fotka.rozmery?.sirka &&
-				fotka.rozmery?.vyska &&
-				urlOdvozene(fotka, 600) &&
-				urlOdvozene(fotka, 1200) &&
-				urlOdvozene(fotka, 2048),
-		);
-	}
-
-	function odpovidaKlicovemuSlovu(fotka: Fotka, klicLower: string): boolean {
-		const klicovaSlova = fotka.klicovaSlova;
-		if (!Array.isArray(klicovaSlova)) return false;
-		// Exact match, case insensitive (kontrakt K2/K3) — žádné částečné shody.
-		return klicovaSlova.some((k) => String(k).toLowerCase() === klicLower);
 	}
 
 	// Alt text: kaskáda titulek → název galerie (rozhodnutí B2). Nikdy prázdný.
@@ -180,11 +144,7 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 
 		let index: Index;
 		try {
-			const odpoved = await fetch("/api/index.json");
-			if (!odpoved.ok) {
-				throw new Error(`/api/index.json vrátilo HTTP ${odpoved.status}`);
-			}
-			index = await odpoved.json();
+			index = await nacistIndex();
 		} catch (chyba) {
 			// Skutečná selhání (síť, neplatný JSON) se logují — na rozdíl od
 			// prázdného výsledku po filtrování, což je legitimní stav a chybu

@@ -1,0 +1,156 @@
+---
+// Rozcestník galerií — fáze 6. Žádné hero, jen nadpis a řada dlaždic
+// (viz outputs/2026-08-29-wireframe-galerie/Main.dc.html).
+//
+// Dlaždice má tři části ze tří různých zdrojů (jádro rozhodnutí fáze 6):
+//   - obrázek  → z metadat, klientský skript níže (kaskáda podle klíčového
+//                slova, viz vyberFotku)
+//   - popisek  → staticky tady na stránce (je to název stránky, ne
+//                vlastnost fotky)
+//   - cíl odkazu → staticky tady na stránce (navigace nesmí stát na
+//                metadatech — omylem označená fotka smí rozbít nejvýš
+//                obrázek na dlaždici, nikdy odkaz)
+//
+// Proto se tahle stránka NEPOUŽÍVÁ přes <MediaGalerie> — ta natahuje
+// všechny odpovídající fotky a odkazuje na plnou velikost s lightboxem,
+// což je přesný opak toho, co dlaždice potřebuje (jedna fotka, statický
+// odkaz na stránku galerie, žádný lightbox). Sdílí s ní ale mechanismus
+// zarovnaných řádků (--polozka-pomer, viz global.css) a pomocné funkce nad
+// indexem (src/lib/fotky.ts), aby se nic nezdvojovalo.
+import Base from "../layouts/Base.astro";
+
+interface Dlazdice {
+	slug: string;
+	nazev: string;
+	href: string;
+	klicGalerie: string;
+}
+
+// Pořadí podle wireframu (Main.dc.html): Řecko, Skotsko, Francie.
+const DLAZDICE: Dlazdice[] = [
+	{ slug: "greece", nazev: "Řecko", href: "/greece/", klicGalerie: "Greece" },
+	{ slug: "scotland", nazev: "Skotsko", href: "/scotland/", klicGalerie: "Scotland" },
+	{ slug: "france", nazev: "Francie", href: "/france/", klicGalerie: "France" },
+];
+---
+
+<Base
+	title="Galerie – Michal Hartman"
+	description="Přehled fotogalerií — Skotsko, Řecko a Francie."
+>
+	<main class="bez-hero">
+		<h1 class="rozcestnik-nadpis">Přehled galerií světla, míst a okamžiků.</h1>
+
+		<div class="rozcestnik-dlazdice-radek">
+			{
+				DLAZDICE.map((d) => (
+					<a
+						class="rozcestnik-dlazdice"
+						href={d.href}
+						data-slug={d.slug}
+						data-klic-galerie={d.klicGalerie}
+					>
+						<span class="rozcestnik-dlazdice-popisek">{d.nazev}</span>
+					</a>
+				))
+			}
+		</div>
+	</main>
+</Base>
+
+<script>
+	import { jeZobrazitelna, nacistIndex, odpovidaKlicovemuSlovu, urlOdvozene, type Fotka } from "../lib/fotky";
+
+	// Dlaždice jsou vždy jen tři a vždy nad ohybem stránky — eager pro
+	// všechny, žádná potřeba lazy prahu jako u mřížky celé galerie.
+	const SIZES = "(max-width: 767px) 100vw, 300px";
+
+	// Kaskáda výběru (rozhodnutí B6, viz zadání fáze 6):
+	// 1. fotka s klíčovým slovem MH-gallery-index-<slug>
+	// 2. když žádná není → fotka s klíčovým slovem galerie
+	// 3. když ani ta ne → null, dlaždice se vykreslí bez obrázku
+	// V krocích 1 a 2: víc kandidátů → první podle klíče (abecedně) —
+	// stabilní, ne náhodné, aby se rozcestník při opakovaném načtení
+	// neměnil (na rozdíl od stránky galerie, kde se pořadí schválně
+	// míchá znovu při každém načtení).
+	function vyberFotku(fotky: Fotka[], klicIndexLower: string, klicGalerieLower: string): Fotka | null {
+		const zIndexu = fotky.filter((f) => odpovidaKlicovemuSlovu(f, klicIndexLower) && jeZobrazitelna(f));
+		if (zIndexu.length > 0) return nejmensiKlic(zIndexu);
+
+		const zGalerie = fotky.filter((f) => odpovidaKlicovemuSlovu(f, klicGalerieLower) && jeZobrazitelna(f));
+		if (zGalerie.length > 0) return nejmensiKlic(zGalerie);
+
+		return null;
+	}
+
+	function nejmensiKlic(fotky: Fotka[]): Fotka {
+		return fotky.reduce((nejmensi, f) => (f.klic < nejmensi.klic ? f : nejmensi));
+	}
+
+	function vlozObrazek(dlazdice: HTMLAnchorElement, fotka: Fotka, alt: string) {
+		const sirka = fotka.rozmery!.sirka;
+		const vyska = fotka.rozmery!.vyska;
+		const url600 = urlOdvozene(fotka, 600)!;
+		const url1200 = urlOdvozene(fotka, 1200)!;
+
+		// flex-grow úměrný poměru stran — stejný trik jako
+		// .media-galerie-polozka (viz global.css, --polozka-pomer).
+		dlazdice.style.setProperty("--polozka-pomer", String(sirka / vyska));
+
+		const img = document.createElement("img");
+		img.src = url600;
+		img.srcset = `${url600} 600w, ${url1200} 1200w`;
+		img.sizes = SIZES;
+		img.width = sirka;
+		img.height = vyska;
+		img.loading = "eager";
+		img.decoding = "async";
+		img.alt = alt;
+
+		// Před popisek, ne za něj — popisek (span, position: absolute) musí
+		// zůstat nad obrázkem ve vizuálním pořadí i v přístupném stromu.
+		dlazdice.insertBefore(img, dlazdice.firstChild);
+	}
+
+	async function vykresliRozcestnik() {
+		const vsechnyDlazdice = document.querySelectorAll<HTMLAnchorElement>(".rozcestnik-dlazdice");
+		if (vsechnyDlazdice.length === 0) return;
+
+		let index: Awaited<ReturnType<typeof nacistIndex>>;
+		try {
+			index = await nacistIndex();
+		} catch (chyba) {
+			// Skutečné selhání (síť, neplatný JSON) se loguje — na rozdíl od
+			// dlaždice bez fotky (Francie), což je legitimní stav bez chyby
+			// v konzoli (viz „Hotovo, když" č. 5).
+			console.error("[rozcestnik] nepodařilo se načíst /api/index.json:", chyba);
+			return;
+		}
+
+		const vsechnyFotky = Array.isArray(index.fotky) ? index.fotky : [];
+
+		vsechnyDlazdice.forEach((dlazdice) => {
+			const slug = dlazdice.dataset.slug ?? "";
+			const klicGalerie = dlazdice.dataset.klicGalerie ?? "";
+			const popisekEl = dlazdice.querySelector(".rozcestnik-dlazdice-popisek");
+			const nazev = popisekEl?.textContent?.trim() || klicGalerie;
+
+			const fotka = vyberFotku(
+				vsechnyFotky,
+				`mh-gallery-index-${slug}`.toLowerCase(),
+				klicGalerie.toLowerCase(),
+			);
+
+			if (fotka) {
+				vlozObrazek(dlazdice, fotka, nazev);
+			} else {
+				// Žádná hláška, žádná chyba — jen dlaždice bez obrázku na tmavé
+				// ploše (viz .rozcestnik-dlazdice--bez-obrazku v global.css).
+				// Odkaz zůstává funkční, je statický z HTML výš.
+				dlazdice.classList.add("rozcestnik-dlazdice--bez-obrazku");
+			}
+		});
+	}
+
+	vykresliRozcestnik();
+</script>
