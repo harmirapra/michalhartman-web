@@ -1,0 +1,236 @@
+---
+// Komponenta galerie — NEVYKRESLUJE se při buildu. Astro vygeneruje jen
+// prázdný kontejner s parametry v data-* atributech; klientský skript (níže)
+// si po načtení stránky vyzvedne aktuální /api/index.json, vyfiltruje fotky
+// podle klíčového slova a poskládá mřížku. Díky tomu se nová fotka objeví
+// v galerii hned po nahrání na server, bez nového buildu/deploye — to je
+// celý smysl architektury (viz zadání fáze 5).
+//
+// Layout „radky" je zatím jediný, který existuje — ostatní (mrizka, zdivo,
+// mozaika, karusel) se přidají, až je bude nějaká galerie potřebovat.
+
+interface Props {
+	klicoveSlovo: string;
+	layout?: "radky";
+	/** Popisek fotky pod náhledem — na stránce galerie vypnutý (rozhodnutí B1),
+	 * zapne se na rozcestníku ve fázi 6. */
+	popisky?: boolean;
+}
+
+const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
+---
+
+<div
+	class="media-galerie"
+	data-klicove-slovo={klicoveSlovo}
+	data-layout={layout}
+	data-popisky={popisky ? "true" : "false"}
+>
+</div>
+
+<script>
+	import PhotoSwipeLightbox from "photoswipe/lightbox";
+	import "photoswipe/style.css";
+
+	// Kolik prvních fotek (po zamíchání) se má načíst hned, ne lazy — týká se
+	// těch, co jsou vidět bez scrollování. Musí jich být dost na první řádek,
+	// jinak se stránka při otevření zdánlivě otevře prázdná (viz zadání).
+	// Přesný počet fotek v prvním řádku je proměnlivý (závisí na poměru stran),
+	// 4 je bezpečná rezerva nad typickým počtem 3 z wireframu.
+	const POCET_EAGER = 4;
+
+	// Desktop: fotka v mřížce o 2-3 na řádek zabírá zhruba polovinu šířky.
+	// Mobil: jeden sloupec, fotka na plnou šířku (viz .media-galerie v
+	// global.css).
+	const SIZES = "(max-width: 767px) 100vw, 50vw";
+
+	interface OdvozenaVelikost {
+		velikost: number;
+		soubor: string;
+	}
+
+	interface Fotka {
+		klic: string;
+		rozmery?: { sirka: number; vyska: number };
+		titulek?: string | null;
+		klicovaSlova?: unknown;
+		autor?: string | null;
+		licence?: string | null;
+		odvozene?: OdvozenaVelikost[];
+	}
+
+	interface Index {
+		fotky?: Fotka[];
+	}
+
+	// Fisher-Yates — nové zamíchání při každém načtení stránky (rozhodnutí B0).
+	function zamichej<T>(pole: T[]): T[] {
+		const vysledek = pole.slice();
+		for (let i = vysledek.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[vysledek[i], vysledek[j]] = [vysledek[j], vysledek[i]];
+		}
+		return vysledek;
+	}
+
+	function urlOdvozene(fotka: Fotka, velikost: number): string | null {
+		const zaznam = fotka.odvozene?.find((o) => o.velikost === velikost);
+		return zaznam ? `/photos/${zaznam.soubor}` : null;
+	}
+
+	// Fotka bez rozměrů nebo bez některé odvozené velikosti se vynechá — bez
+	// těchhle dat by nešlo bezpečně nastavit width/height (stránka by
+	// poskakovala) ani napojit lightbox na plnou velikost.
+	function jeZobrazitelna(fotka: Fotka): boolean {
+		return Boolean(
+			fotka.rozmery?.sirka &&
+				fotka.rozmery?.vyska &&
+				urlOdvozene(fotka, 600) &&
+				urlOdvozene(fotka, 1200) &&
+				urlOdvozene(fotka, 2048),
+		);
+	}
+
+	function odpovidaKlicovemuSlovu(fotka: Fotka, klicLower: string): boolean {
+		const klicovaSlova = fotka.klicovaSlova;
+		if (!Array.isArray(klicovaSlova)) return false;
+		// Exact match, case insensitive (kontrakt K2/K3) — žádné částečné shody.
+		return klicovaSlova.some((k) => String(k).toLowerCase() === klicLower);
+	}
+
+	// Alt text: kaskáda titulek → název galerie (rozhodnutí B2). Nikdy prázdný.
+	function altText(fotka: Fotka, nazevGalerie: string): string {
+		return fotka.titulek?.trim() || nazevGalerie;
+	}
+
+	function pridatMeta(rodic: HTMLElement, itemprop: string, obsah: string | null | undefined) {
+		if (!obsah) return;
+		const meta = document.createElement("meta");
+		meta.setAttribute("itemprop", itemprop);
+		meta.setAttribute("content", obsah);
+		rodic.appendChild(meta);
+	}
+
+	function vytvorPolozku(
+		fotka: Fotka,
+		index: number,
+		nazevGalerie: string,
+		popisky: boolean,
+	): HTMLAnchorElement {
+		const sirka = fotka.rozmery!.sirka;
+		const vyska = fotka.rozmery!.vyska;
+		const url600 = urlOdvozene(fotka, 600)!;
+		const url1200 = urlOdvozene(fotka, 1200)!;
+		const url2048 = urlOdvozene(fotka, 2048)!;
+		const alt = altText(fotka, nazevGalerie);
+
+		const odkaz = document.createElement("a");
+		odkaz.className = "media-galerie-polozka";
+		odkaz.href = url2048;
+		odkaz.target = "_blank";
+		odkaz.rel = "noreferrer";
+		// Napojení na PhotoSwipe (photoswipe/lightbox čte data-pswp-width/height
+		// z anchoru přes children: 'a').
+		odkaz.dataset.pswpWidth = String(sirka);
+		odkaz.dataset.pswpHeight = String(vyska);
+		odkaz.setAttribute("itemscope", "");
+		odkaz.setAttribute("itemtype", "https://schema.org/ImageObject");
+		// flex-grow úměrný poměru stran — viz .media-galerie-polozka
+		// v global.css (--polozka-pomer).
+		odkaz.style.setProperty("--polozka-pomer", String(sirka / vyska));
+
+		const img = document.createElement("img");
+		img.src = url600;
+		img.srcset = `${url600} 600w, ${url1200} 1200w`;
+		img.sizes = SIZES;
+		img.width = sirka;
+		img.height = vyska;
+		// Viditelné bez scrollování nesmí být lazy, jinak se stránka otevře
+		// zdánlivě prázdná.
+		img.loading = index < POCET_EAGER ? "eager" : "lazy";
+		img.decoding = "async";
+		img.alt = alt;
+		odkaz.appendChild(img);
+
+		// ImageObject (schema.org) — vedlejší produkt dat, která index nese
+		// stejně (viz architektura galerie). contentUrl ukazuje na plnou
+		// velikost, ne na náhled v mřížce.
+		pridatMeta(odkaz, "contentUrl", url2048);
+		pridatMeta(odkaz, "creator", fotka.autor);
+		pridatMeta(odkaz, "copyrightNotice", fotka.licence);
+		pridatMeta(odkaz, "license", fotka.licence);
+		pridatMeta(odkaz, "caption", alt);
+
+		// Popisek fotky se ve fázi 5 na stránce galerie nezobrazuje
+		// (rozhodnutí B1) — parametr `popisky` je připravený pro rozcestník.
+		if (popisky && fotka.titulek) {
+			const popisek = document.createElement("span");
+			popisek.className = "media-galerie-popisek";
+			popisek.textContent = fotka.titulek;
+			odkaz.appendChild(popisek);
+		}
+
+		return odkaz;
+	}
+
+	async function vykresliGalerii(kontejner: HTMLElement, poradi: number) {
+		const klicoveSlovo = kontejner.dataset.klicoveSlovo ?? "";
+		const klicLower = klicoveSlovo.toLowerCase();
+		const popisky = kontejner.dataset.popisky === "true";
+
+		let index: Index;
+		try {
+			const odpoved = await fetch("/api/index.json");
+			if (!odpoved.ok) {
+				throw new Error(`/api/index.json vrátilo HTTP ${odpoved.status}`);
+			}
+			index = await odpoved.json();
+		} catch (chyba) {
+			// Skutečná selhání (síť, neplatný JSON) se logují — na rozdíl od
+			// prázdného výsledku po filtrování, což je legitimní stav a chybu
+			// v konzoli mít nesmí (viz „Hotovo, když" č. 6).
+			console.error("[media-galerie] nepodařilo se načíst /api/index.json:", chyba);
+			return;
+		}
+
+		const vsechnyFotky = Array.isArray(index.fotky) ? index.fotky : [];
+		const shoda = vsechnyFotky.filter(
+			(fotka) => odpovidaKlicovemuSlovu(fotka, klicLower) && jeZobrazitelna(fotka),
+		);
+
+		// Prázdná galerie je legitimní stav nové galerie bez nahraných fotek
+		// (rozhodnutí B7) — žádná hláška, žádná chyba, prostě prázdné místo.
+		if (shoda.length === 0) {
+			return;
+		}
+
+		const nazevGalerie = document.querySelector("h1")?.textContent?.trim() || klicoveSlovo;
+		const promichane = zamichej(shoda);
+
+		const fragment = document.createDocumentFragment();
+		promichane.forEach((fotka, i) => {
+			fragment.appendChild(vytvorPolozku(fotka, i, nazevGalerie, popisky));
+		});
+		kontejner.appendChild(fragment);
+
+		if (!kontejner.id) {
+			kontejner.id = `media-galerie-${poradi}`;
+		}
+
+		const lightbox = new PhotoSwipeLightbox({
+			gallery: `#${kontejner.id}`,
+			children: "a",
+			pswpModule: () => import("photoswipe"),
+			// Čistá černá plocha bez knihovních výchozích hodnot (viz global.css
+			// pro barvu přes --pswp-bg) — bgOpacity 1 dělá pozadí neprůhledné.
+			bgOpacity: 1,
+			// Stažení zůstává vypnuté — v jádru PhotoSwipe v5 není žádné
+			// tlačítko stažení, jen se sem záměrně nepřidává (žádný plugin).
+		});
+		lightbox.init();
+	}
+
+	document.querySelectorAll<HTMLElement>(".media-galerie").forEach((kontejner, poradi) => {
+		vykresliGalerii(kontejner, poradi);
+	});
+</script>
