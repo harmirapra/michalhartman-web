@@ -18,6 +18,7 @@ import path from 'node:path';
 import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { TMP_DIR, ORIGINALS_DIR } from './dataDir.js';
+import { processUploadedPhoto } from './photoProcessing.js';
 import { pathToKey, isValidKey } from './slug.js';
 
 // Rozumný strop na jednu fotku, aby chybný/zlomyslný požadavek nezaplnil disk.
@@ -75,10 +76,35 @@ function handleUpload(req, res) {
 	pipeline(req, hashingGuard, writeStream)
 		.then(async () => {
 			await fsp.rename(tmpPath, finalPath);
+			const hashHex = `sha256:${hash.digest('hex')}`;
+
+			// Od tohohle místa je originál uložený natrvalo bez ohledu na to, co
+			// se stane dál — proto je zpracování v samostatném try/catch.
+			// Nepředvídaná chyba tady (na rozdíl od chyby uvnitř
+			// processUploadedPhoto, kterou si ošetřuje a hlásí sama) nesmí spadnout
+			// do větve "upload_failed" níže: ta by tvrdila, že se upload nepovedl,
+			// zatímco soubor v originals/ v pořádku leží.
+			let vysledek;
+			try {
+				vysledek = await processUploadedPhoto({
+					key,
+					hash: hashHex,
+					rawPath,
+					originalPath: finalPath,
+				});
+			} catch (err) {
+				console.error(`Nečekaná chyba při zpracování fotky "${key}":`, err);
+				vysledek = { zpracovano: false, opakovaneSelhani: false, chyba: err.message };
+			}
+
 			res.status(200).json({
 				key,
-				hash: `sha256:${hash.digest('hex')}`,
+				hash: hashHex,
 				size: bytesSeen,
+				zpracovano: vysledek.zpracovano,
+				...(vysledek.zpracovano
+					? {}
+					: { chyba: vysledek.chyba, opakovaneSelhani: Boolean(vysledek.opakovaneSelhani) }),
 			});
 		})
 		.catch(async (err) => {
