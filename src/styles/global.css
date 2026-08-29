@@ -61,6 +61,12 @@
 	   --galerie-radek-vyska (rozcestník a stránka jednotlivé galerie jsou
 	   dva různé wireframy s vlastní naměřenou hodnotou). Fáze 6. */
 	--rozcestnik-dlazdice-vyska: 287px;
+
+	/* Mezera mezi fotkami/dlaždicemi v řádku i mezi řádky (layout „radky",
+	   viz .media-galerie a .rozcestnik-dlazdice-radek) — stejná hodnota v
+	   obou směrech. Čte ji i JS (src/lib/radky.ts), aby se skutečná hodnota
+	   měnila jen tady. */
+	--galerie-radek-mezera: 5px;
 }
 
 @media (max-width: 1024px) {
@@ -490,25 +496,31 @@ main.bez-hero {
 }
 
 /* ---------- komponenta MediaGalerie, layout „radky" — fáze 5 ---------- */
-/* Zarovnané řádky bez JS knihovny: jeden flex kontejner s wrapem. Prohlížeč
-   sám rozlomí položky do řádků podle jejich přirozené šířky (aspect-ratio ×
-   --galerie-radek-vyska) a v rámci KAŽDÉHO řádku pak flex-grow dorovná
-   šířku přesně na 100 % — to je celý trik, žádný layout balíček. flex-grow
-   se počítá v JS z poměru stran konkrétní fotky (viz MediaGalerie.astro)
-   a předává se přes vlastní proměnnou --polozka-pomer, aby šlo na mobilu
-   flex-grow vypnout normálním pravidlem v CSS, ne !important přes inline styl. */
+/* Zarovnané řádky bez JS knihovny: JS (src/lib/radky.ts) rozdělí fotky do
+   řádků tak, aby se při --galerie-radek-vyska vešly do šířky kontejneru,
+   a uzavřenému řádku dopočítá SKUTEČNOU výšku (jen menší, nikdy větší), aby
+   šířky fotek seděly přesně — proto tu není žádná pevná výška položky ani
+   flex-grow, každý řádek je vlastní div s výškou a šířkou položek nastavenou
+   inline v px. Poslední neúplný řádek zůstává na cílové výšce nenatažený.
+   Na mobilu (viz media query níž) JS řádky vůbec neskládá — položky jsou
+   přímo v .media-galerie, jeden sloupec, výška auto. */
 
 .media-galerie {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 5px;
+	flex-direction: column;
+	gap: var(--galerie-radek-mezera);
 	padding: 0 var(--mezera-8);
+}
+
+.media-galerie-radek {
+	display: flex;
+	gap: var(--galerie-radek-mezera);
 }
 
 .media-galerie-polozka {
 	display: block;
-	height: var(--galerie-radek-vyska);
-	flex-grow: var(--polozka-pomer, 1);
+	height: 100%;
+	flex: 0 0 auto;
 }
 
 .media-galerie-polozka img {
@@ -551,23 +563,30 @@ main.bez-hero {
 	letter-spacing: -0.5px;
 }
 
-/* Řada dlaždic — stejný trik jako .media-galerie (flex-grow úměrný poměru
-   stran přes --polozka-pomer, viz JS v gallery.astro), ale s vlastní výškou
-   (--rozcestnik-dlazdice-vyska) a vycentrovanou řadou — na rozdíl od stránky
-   galerie tu je jen pár dlaždic, ne mřížka přes celou šířku. */
+/* Řada dlaždic — stejný mechanismus zarovnaných řádků jako .media-galerie
+   (viz JS v gallery.astro a src/lib/radky.ts), jen s vlastní cílovou výškou
+   (--rozcestnik-dlazdice-vyska) a vycentrovaným řádkem — tady jsou jen tři
+   dlaždice, ne mřížka přes celou šířku, takže obvykle tvoří jediný
+   „neúplný" řádek: zůstane na cílové výšce, nenatáhne se a JS vnitřní div
+   vycentruje. */
 .rozcestnik-dlazdice-radek {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 5px;
-	justify-content: center;
+	flex-direction: column;
+	gap: var(--galerie-radek-mezera);
 	padding: 0 var(--mezera-8);
+}
+
+.rozcestnik-dlazdice-radek-vnitrni {
+	display: flex;
+	gap: var(--galerie-radek-mezera);
+	justify-content: center;
 }
 
 .rozcestnik-dlazdice {
 	position: relative;
 	display: block;
-	height: var(--rozcestnik-dlazdice-vyska);
-	flex-grow: var(--polozka-pomer, 1);
+	height: 100%;
+	flex: 0 0 auto;
 }
 
 .rozcestnik-dlazdice img {
