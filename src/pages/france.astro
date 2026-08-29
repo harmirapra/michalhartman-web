@@ -1,0 +1,22 @@
+---
+import Base from "../layouts/Base.astro";
+import MediaGalerie from "../components/MediaGalerie.astro";
+---
+
+<Base
+	title="Francie – Michal Hartman"
+	description="Fotografie z Francie."
+>
+	<main class="bez-hero">
+		<h1 class="vizualne-skryty">Francie</h1>
+
+		<p class="drobecky">
+			<a href="/gallery/">Galerie</a><span class="sip">»</span>Francie
+		</p>
+
+		<!-- Zatím bez fotek (klíčové slovo "France" nemá žádnou fotku) —
+		     prázdná galerie je legitimní stav, MediaGalerie ho ošetřuje
+		     tiše (žádná hláška, žádná chyba v konzoli). -->
+		<MediaGalerie klicoveSlovo="France" layout="radky" />
+	</main>
+</Base>

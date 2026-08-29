@@ -30,7 +30,7 @@ const jeAktivni = (href: string) => cesta === href;
 			<a class="znacka" href="/">Michal Hartman</a>
 			<nav id="mobilni-navigace" class="navigace" aria-label="Hlavní navigace">
 				<a href="/" aria-current={jeAktivni("/") ? "page" : undefined}>Úvod</a>
-				<span class="odkaz-vzhled">Galerie</span>
+				<a href="/gallery/" aria-current={jeAktivni("/gallery/") ? "page" : undefined}>Galerie</a>
 				<a href="/about/" aria-current={jeAktivni("/about/") ? "page" : undefined}>O mně</a>
 				<div class="jazyky">
 					<span class="odkaz-vzhled aktivni">CZ</span>
