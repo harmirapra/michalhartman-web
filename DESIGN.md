@@ -49,6 +49,16 @@ Když je jí na obrazovce vidět víc než pár slov, je to chyba.
 **Žádné lokální přepisy barev.** Barva se mění jedině změnou tokenu tady, nikdy
 zápisem hex kódu přímo v komponentě.
 
+**Výjimka pro `/admin` (fáze 7):** pravidlo „nepoužívat `--barva-akcent-tlumeny`
+současně s `--barva-zvyrazneni` na jedné obrazovce" platí pro **veřejné stránky
+webu**, kde má zdrženlivost přednost před funkcí. `/admin` je soukromý pracovní
+nástroj (`noindex`, bez odkazu z navigace, vědomě bez `<Base>`), ne prezentace —
+a report na něm potřebuje rozlišit dvě různé jistoty: `--barva-zvyrazneni` pro
+to, co je jistá chyba (selhalo, kolize klíčů), `--barva-akcent-tlumeny` pro to,
+co jen stojí za pohled (bez klíčových slov, duplicitní obsah). Použití obou
+tokenů najednou na Obrazovce „Stav knihovny" je proto vědomá výjimka pro tenhle
+jeden nástroj, ne obecné uvolnění pravidla — jinde na webu platí beze změny.
+
 ## 4. Typografie
 
 **Jediná rodina: Poppins.** Nadpisy jsou záměrně velmi světlé (tloušťka 200),
