@@ -1,0 +1,1105 @@
+---
+// Fáze 7 — /admin: diagnostika a záchrana, ne každodenní nástroj (v devíti
+// případech z deseti se sem vůbec nechodí, viz zadání). Jediná obrazovka:
+// sekce se přepínají v prohlížeči (JS níže), žádné samostatné URL.
+//
+// Vědomě NEPOUŽÍVÁ <Base> — ta by přidala hlavičku s odkazy na Galerii/O mně
+// a patičku webu, což na pracovním nástroji nedává smysl a jen by matlo.
+// Fonty a barevné/typografické tokeny z global.css se přesto přebírají beze
+// změny (DESIGN.md), jen bez zbytku chrome veřejných stránek.
+//
+// `/admin` se nesmí objevit v mapě webu ani v navigaci (meta robots níže) —
+// žádná stránka na něj neodkazuje a nikde není v seznamu odkazů webu.
+import "@fontsource/poppins/latin-ext-200.css";
+import "@fontsource/poppins/latin-ext-300.css";
+import "@fontsource/poppins/200.css";
+import "@fontsource/poppins/300.css";
+import "../styles/global.css";
+---
+
+<html lang="cs">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex, nofollow" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<title>Správa fotogalerie – Michal Hartman</title>
+	</head>
+	<body class="admin-telo">
+		<div class="admin-wrap">
+			<!-- Obrazovka 1: odemčení. Token se NIKDY neukládá (ne do localStorage,
+			     sessionStorage ani cookie) — žije jen v proměnné JS níže a mizí
+			     zavřením záložky. Viz zadání fáze 7 a stránky /cookies/, /privacy-policy/. -->
+			<section id="admin-zamek" class="admin-panel-jednoduchy">
+				<h1 class="admin-nadpis">Správa fotogalerie</h1>
+				<p class="admin-podnadpis">Přístup jen s tokenem.</p>
+				<form id="admin-zamek-form" novalidate>
+					<div class="admin-pole">
+						<label for="admin-token">Token</label>
+						<input
+							id="admin-token"
+							name="token"
+							type="password"
+							autocomplete="off"
+							autocapitalize="off"
+							spellcheck="false"
+							required
+						/>
+						<p class="admin-napoveda">
+							Najdeš ho v Railway → Variables → <code>ADMIN_TOKEN</code>
+						</p>
+					</div>
+					<button type="submit" class="admin-btn">Odemknout</button>
+					<p id="admin-zamek-chyba" class="admin-chyba" role="alert" hidden></p>
+				</form>
+			</section>
+
+			<!-- Obrazovky 2–4, skryté až do odemčení. -->
+			<section id="admin-app" hidden>
+				<nav class="admin-taby" aria-label="Sekce správy">
+					<button type="button" class="admin-tab" data-view="stav" aria-current="true"
+						>Stav knihovny</button
+					>
+					<button type="button" class="admin-tab" data-view="klicova-slova" aria-current="false"
+						>Klíčová slova</button
+					>
+					<button type="button" class="admin-tab" data-view="fotka" aria-current="false"
+						>Najít fotku</button
+					>
+				</nav>
+
+				<!-- Obrazovka 2: stav knihovny -->
+				<div id="admin-view-stav" class="admin-view">
+					<p id="admin-stav-podnadpis" class="admin-podnadpis"></p>
+					<p id="admin-stav-nacitani" class="admin-nacitani">Načítám…</p>
+					<p id="admin-stav-chyba" class="admin-chyba" role="alert" hidden></p>
+
+					<div id="admin-stav-obsah" hidden>
+						<div id="admin-staty" class="admin-staty"></div>
+
+						<div class="admin-panel">
+							<h2>Zpracování selhalo</h2>
+							<div id="admin-panel-selhalo" class="admin-panel-telo"></div>
+						</div>
+						<div class="admin-panel">
+							<h2>Bez klíčových slov — nezobrazí se v žádné galerii</h2>
+							<div id="admin-panel-bez-klicu" class="admin-panel-telo"></div>
+						</div>
+						<div class="admin-panel">
+							<h2>Kolize klíčů</h2>
+							<div id="admin-panel-kolize" class="admin-panel-telo"></div>
+						</div>
+						<div class="admin-panel">
+							<h2>Duplicitní obsah — táž fotka pod dvěma klíči</h2>
+							<div id="admin-panel-duplicity" class="admin-panel-telo"></div>
+						</div>
+
+						<div class="admin-akce">
+							<button type="button" id="admin-rebuild-btn" class="admin-btn admin-btn--ghost"
+								>Přeskládat index</button
+							>
+							<button type="button" class="admin-btn admin-btn--ghost" data-view-cil="klicova-slova"
+								>Klíčová slova</button
+							>
+							<button type="button" class="admin-btn admin-btn--ghost" data-view-cil="fotka"
+								>Najít fotku</button
+							>
+						</div>
+						<p id="admin-rebuild-vysledek" class="admin-hint" role="status" hidden></p>
+					</div>
+				</div>
+
+				<!-- Obrazovka 3: klíčová slova -->
+				<div id="admin-view-klicova-slova" class="admin-view" hidden>
+					<p class="admin-podnadpis">
+						Seřazeno od nejvzácnějších. Slovo na jediné fotce bývá překlep.
+					</p>
+					<p id="admin-klicova-slova-nacitani" class="admin-nacitani">Načítám…</p>
+					<p id="admin-klicova-slova-chyba" class="admin-chyba" role="alert" hidden></p>
+
+					<div id="admin-klicova-slova-obsah" hidden>
+						<div class="admin-tablewrap">
+							<table>
+								<thead>
+									<tr>
+										<th>Klíčové slovo</th>
+										<th class="admin-th-cislo">Fotek</th>
+									</tr>
+								</thead>
+								<tbody id="admin-tabulka-klicova-slova"></tbody>
+							</table>
+						</div>
+
+						<h2 class="admin-podsekce">Funkční klíčová slova (MH-)</h2>
+						<p class="admin-hint">
+							Počítají se zvlášť, aby mezi podezřelými nepřekážela — počet 1 tu bývá správně.
+						</p>
+						<div class="admin-tablewrap">
+							<table>
+								<thead>
+									<tr>
+										<th>Klíčové slovo</th>
+										<th class="admin-th-cislo">Fotek</th>
+									</tr>
+								</thead>
+								<tbody id="admin-tabulka-mh-klicova-slova"></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+				<!-- Obrazovka 4: najít fotku a odebrat -->
+				<div id="admin-view-fotka" class="admin-view" hidden>
+					<div id="admin-fotka-hledani">
+						<div class="admin-pole">
+							<label for="admin-fotka-q">Název nebo klíč</label>
+							<input
+								id="admin-fotka-q"
+								type="search"
+								autocomplete="off"
+								placeholder="např. milos"
+							/>
+						</div>
+						<p class="admin-hint">Hledá se v klíči, ne v obrázcích — rozhraní není prohlížeč fotek.</p>
+						<p id="admin-fotka-nacitani" class="admin-nacitani">Načítám seznam…</p>
+						<p id="admin-fotka-chyba" class="admin-chyba" role="alert" hidden></p>
+						<div id="admin-fotka-vysledky" class="admin-panel-telo" hidden></div>
+					</div>
+
+					<div id="admin-fotka-detail" hidden>
+						<button type="button" id="admin-fotka-zpet" class="admin-btn admin-btn--ghost"
+							>← Zpět na hledání</button
+						>
+						<h2 id="admin-fotka-detail-klic" class="admin-mono admin-detail-klic"></h2>
+						<div class="admin-panel-telo">
+							<div class="admin-radek">
+								<span class="admin-radek-k">klíčová slova</span>
+								<span id="admin-fotka-detail-klicova-slova" class="admin-radek-v"></span>
+							</div>
+							<div class="admin-radek">
+								<span class="admin-radek-k">v galeriích</span>
+								<span id="admin-fotka-detail-galerie" class="admin-radek-v"></span>
+							</div>
+							<div class="admin-radek">
+								<span class="admin-radek-k">smaže se</span>
+								<span id="admin-fotka-detail-smaze" class="admin-radek-v"></span>
+							</div>
+						</div>
+						<p class="admin-hint">
+							Originál zůstává na tvém Macu. Publikováním z Lightroomu ji můžeš kdykoli vrátit.
+						</p>
+						<p id="admin-fotka-akce-chyba" class="admin-chyba" role="alert" hidden></p>
+						<div class="admin-akce">
+							<button type="button" id="admin-fotka-odebrat" class="admin-btn admin-btn--danger"
+								>Odebrat ze serveru</button
+							>
+							<button type="button" id="admin-fotka-zrusit" class="admin-btn admin-btn--ghost"
+								>Zrušit</button
+							>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+	</body>
+</html>
+
+<script>
+	import { odpovidaKlicovemuSlovu, nacistIndex, type Fotka } from "../lib/fotky";
+
+	// --- Token: jen v paměti téhle stránky, NIKDY v úložišti prohlížeče. ---
+	// Zavřením záložky mizí; po reloadu je potřeba ho vložit znovu — to je
+	// záměr (viz zadání fáze 7), ne nedodělek.
+	let token: string | null = null;
+
+	// Galerie, které web dnes má — pro sloupec "v jakých galeriích" na
+	// Obrazovce 4. Stejné klíčové slovo a stejná shoda (odpovidaKlicovemuSlovu)
+	// jako používají skutečné stránky /scotland/, /greece/, /france/, aby se
+	// admin obrazovka nikdy neodchýlila od toho, co se opravdu zobrazí.
+	const GALERIE: { nazev: string; klic: string }[] = [
+		{ nazev: "Skotsko", klic: "scotland" },
+		{ nazev: "Řecko", klic: "greece" },
+		{ nazev: "Francie", klic: "france" },
+	];
+
+	function escapovat(text: string): string {
+		const el = document.createElement("span");
+		el.textContent = text;
+		return el.innerHTML;
+	}
+
+	function adminFetch(cesta: string, options: RequestInit = {}): Promise<Response> {
+		const headers = new Headers(options.headers);
+		if (token) headers.set("Authorization", `Bearer ${token}`);
+		return fetch(cesta, { ...options, headers });
+	}
+
+	async function zpravaZOdpovedi(res: Response, vychozi: string): Promise<string> {
+		if (res.status === 401) return "Neplatný token.";
+		if (res.status === 429) return "Příliš mnoho neúspěšných pokusů — zkus to za minutu.";
+		try {
+			const data = await res.json();
+			if (typeof data?.message === "string" && data.message) return data.message;
+		} catch {
+			// Odpověď bez JSON těla — použije se obecná hláška níže.
+		}
+		return `${vychozi} (HTTP ${res.status}).`;
+	}
+
+	// ---------------------------------------------------------------------
+	// Obrazovka 1 — odemčení
+	// ---------------------------------------------------------------------
+
+	const zamekForm = document.querySelector<HTMLFormElement>("#admin-zamek-form")!;
+	const tokenInput = document.querySelector<HTMLInputElement>("#admin-token")!;
+	const zamekChyba = document.querySelector<HTMLParagraphElement>("#admin-zamek-chyba")!;
+	const zamekSekce = document.querySelector<HTMLElement>("#admin-zamek")!;
+	const appSekce = document.querySelector<HTMLElement>("#admin-app")!;
+
+	function ukazChybu(el: HTMLElement, text: string) {
+		el.textContent = text;
+		el.hidden = false;
+	}
+
+	function skryjChybu(el: HTMLElement) {
+		el.hidden = true;
+		el.textContent = "";
+	}
+
+	zamekForm.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		skryjChybu(zamekChyba);
+		const zadanyToken = tokenInput.value;
+		if (!zadanyToken) return;
+
+		const tlacitko = zamekForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+		if (tlacitko) tlacitko.disabled = true;
+
+		try {
+			const res = await fetch("/admin/stav", {
+				headers: { Authorization: `Bearer ${zadanyToken}` },
+			});
+			if (!res.ok) {
+				ukazChybu(zamekChyba, await zpravaZOdpovedi(res, "Odemčení selhalo"));
+				return;
+			}
+			token = zadanyToken;
+			tokenInput.value = "";
+			zamekSekce.hidden = true;
+			appSekce.hidden = false;
+			nactiStav();
+		} catch (chyba) {
+			console.error("[admin] ověření tokenu selhalo:", chyba);
+			ukazChybu(zamekChyba, "Server neodpověděl. Zkontroluj připojení a zkus to znovu.");
+		} finally {
+			if (tlacitko) tlacitko.disabled = false;
+		}
+	});
+
+	// ---------------------------------------------------------------------
+	// Přepínání sekcí (jedna stránka, žádné samostatné URL — viz zadání)
+	// ---------------------------------------------------------------------
+
+	const views: Record<string, HTMLElement> = {
+		stav: document.querySelector("#admin-view-stav")!,
+		"klicova-slova": document.querySelector("#admin-view-klicova-slova")!,
+		fotka: document.querySelector("#admin-view-fotka")!,
+	};
+
+	function zobrazView(nazev: string) {
+		for (const [klic, el] of Object.entries(views)) {
+			el.hidden = klic !== nazev;
+		}
+		for (const tab of document.querySelectorAll<HTMLButtonElement>(".admin-tab")) {
+			tab.setAttribute("aria-current", String(tab.dataset.view === nazev));
+		}
+		if (nazev === "stav" && !stavNacten) nactiStav();
+		if (nazev === "klicova-slova" && !klicovaSlovaNactena) nactiKlicovaSlova();
+		if (nazev === "fotka" && !hledaniNacteno) nactiHledani();
+	}
+
+	document.querySelectorAll<HTMLButtonElement>(".admin-tab, [data-view-cil]").forEach((tlacitko) => {
+		tlacitko.addEventListener("click", () => {
+			const cil = tlacitko.dataset.view ?? tlacitko.dataset.viewCil;
+			if (cil) zobrazView(cil);
+		});
+	});
+
+	// ---------------------------------------------------------------------
+	// Obrazovka 2 — stav knihovny (GET /admin/report)
+	// ---------------------------------------------------------------------
+
+	interface SelhanaFotka {
+		klic: string;
+		chyba: string;
+	}
+	interface KoliznKlic {
+		klic: string;
+		cesty: string[];
+		naposledy: string;
+	}
+	interface DuplicitniSkupina {
+		otisk: string;
+		klice: string[];
+	}
+	interface ReportOdpoved {
+		aktualizovano: string | null;
+		souhrn: { ulozeno: number; vIndexu: number; selhalo: number; bezKlicovychSlov: number };
+		klicovaSlova: { klicoveSlovo: string; pocet: number }[];
+		fotkyBezKlicovychSlov: string[];
+		selhaneFotky: SelhanaFotka[];
+		kolizeKlicu: KoliznKlic[];
+		duplicitniObsah: DuplicitniSkupina[];
+	}
+
+	let posledniReport: ReportOdpoved | null = null;
+	let stavNacten = false;
+
+	const stavNacitani = document.querySelector<HTMLElement>("#admin-stav-nacitani")!;
+	const stavChyba = document.querySelector<HTMLElement>("#admin-stav-chyba")!;
+	const stavObsah = document.querySelector<HTMLElement>("#admin-stav-obsah")!;
+	const stavPodnadpis = document.querySelector<HTMLElement>("#admin-stav-podnadpis")!;
+	const statyEl = document.querySelector<HTMLElement>("#admin-staty")!;
+
+	function statDlazdice(hodnota: number, popisek: string, druh: "" | "spatne" | "upozorneni") {
+		const trida = druh ? ` admin-stat--${druh}` : "";
+		return `<div class="admin-stat${trida}"><div class="admin-stat-n">${hodnota}</div><div class="admin-stat-l">${escapovat(popisek)}</div></div>`;
+	}
+
+	function formatDatumCas(iso: string | null): string {
+		if (!iso) return "zatím nikdy";
+		try {
+			return new Date(iso).toLocaleString("cs-CZ", {
+				day: "numeric",
+				month: "numeric",
+				year: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+		} catch {
+			return iso;
+		}
+	}
+
+	// Prázdná sekce se ukazuje taky, jako klidné potvrzení — kdyby zmizela,
+	// nešlo by poznat rozdíl mezi "zkontrolováno a v pořádku" a "nezkontrolováno".
+	function panelNeboPrazdno(obsah: string, prazdnaZprava: string): string {
+		return obsah || `<p class="admin-prazdno">${escapovat(prazdnaZprava)}</p>`;
+	}
+
+	function vykresliStav(report: ReportOdpoved) {
+		stavPodnadpis.textContent = `Naposledy přeskládáno ${formatDatumCas(report.aktualizovano)}`;
+
+		const kolizeCount = report.kolizeKlicu.length;
+		const duplicityCount = report.duplicitniObsah.length;
+
+		statyEl.innerHTML = [
+			statDlazdice(report.souhrn.ulozeno, "uloženo", ""),
+			statDlazdice(report.souhrn.vIndexu, "v indexu", ""),
+			statDlazdice(report.souhrn.selhalo, "selhalo", report.souhrn.selhalo > 0 ? "spatne" : ""),
+			statDlazdice(
+				report.souhrn.bezKlicovychSlov,
+				"bez klíč. slov",
+				report.souhrn.bezKlicovychSlov > 0 ? "upozorneni" : "",
+			),
+			statDlazdice(kolizeCount, "kolize klíčů", kolizeCount > 0 ? "spatne" : ""),
+			statDlazdice(duplicityCount, "duplicitní obsah", duplicityCount > 0 ? "upozorneni" : ""),
+		].join("");
+
+		document.querySelector("#admin-panel-selhalo")!.innerHTML = panelNeboPrazdno(
+			report.selhaneFotky
+				.map(
+					(f) =>
+						`<div class="admin-radek"><span class="admin-radek-k admin-mono">${escapovat(f.klic)}</span><span class="admin-radek-v admin-radek-v--spatne">${escapovat(f.chyba)}</span></div>`,
+				)
+				.join("") +
+				(report.selhaneFotky.length
+					? '<p class="admin-hint">Oprav v Lightroomu a publikuj znovu. Server to zkusí sám, jakmile se obsah fotky změní.</p>'
+					: ""),
+			"Žádné — všechny uložené fotky se zpracovaly v pořádku.",
+		);
+
+		document.querySelector("#admin-panel-bez-klicu")!.innerHTML = panelNeboPrazdno(
+			report.fotkyBezKlicovychSlov
+				.map(
+					(klic) =>
+						`<div class="admin-radek"><span class="admin-radek-k admin-mono">${escapovat(klic)}</span><span class="admin-radek-v">uloženo, neviditelné</span></div>`,
+				)
+				.join(""),
+			"Žádné — každá uložená fotka má aspoň jedno klíčové slovo.",
+		);
+
+		document.querySelector("#admin-panel-kolize")!.innerHTML = panelNeboPrazdno(
+			report.kolizeKlicu
+				.map(
+					(k) =>
+						`<div class="admin-radek"><span class="admin-radek-k admin-mono">${escapovat(k.klic)}</span><span class="admin-radek-v admin-radek-v--spatne">${k.cesty.length} cesty</span></div>`,
+				)
+				.join(""),
+			"Žádné — každá fotka má vlastní klíč.",
+		);
+
+		document.querySelector("#admin-panel-duplicity")!.innerHTML = panelNeboPrazdno(
+			report.duplicitniObsah
+				.map(
+					(skupina) =>
+						`<div class="admin-radek-skupina">${skupina.klice
+							.map(
+								(klic) =>
+									`<div class="admin-radek"><span class="admin-radek-k admin-mono">${escapovat(klic)}</span><span class="admin-radek-v admin-radek-v--upozorneni">shodný otisk</span></div>`,
+							)
+							.join("")}</div>`,
+				)
+				.join("") +
+				(report.duplicitniObsah.length
+					? '<p class="admin-hint">Nejčastěji tatáž fotka ve dvou podsložkách, nebo přejmenovaný soubor po opravě. V galerii se zobrazí dvakrát.</p>'
+					: ""),
+			"Žádné — žádná fotka nemá dvojče se stejným obsahem pod jiným klíčem.",
+		);
+	}
+
+	async function nactiStav() {
+		stavNacitani.hidden = false;
+		stavObsah.hidden = true;
+		skryjChybu(stavChyba);
+		try {
+			const res = await adminFetch("/admin/report");
+			if (!res.ok) {
+				ukazChybu(stavChyba, await zpravaZOdpovedi(res, "Načtení stavu selhalo"));
+				return;
+			}
+			posledniReport = await res.json();
+			vykresliStav(posledniReport);
+			stavObsah.hidden = false;
+			stavNacten = true;
+		} catch (chyba) {
+			console.error("[admin] načtení /admin/report selhalo:", chyba);
+			ukazChybu(stavChyba, "Server neodpověděl. Zkus to znovu.");
+		} finally {
+			stavNacitani.hidden = true;
+		}
+	}
+
+	const rebuildBtn = document.querySelector<HTMLButtonElement>("#admin-rebuild-btn")!;
+	const rebuildVysledek = document.querySelector<HTMLElement>("#admin-rebuild-vysledek")!;
+
+	rebuildBtn.addEventListener("click", async () => {
+		rebuildBtn.disabled = true;
+		rebuildVysledek.hidden = true;
+		try {
+			const res = await adminFetch("/admin/rebuild", { method: "POST" });
+			const data = await res.json().catch(() => null);
+			if (!res.ok) {
+				rebuildVysledek.textContent = data?.message
+					? `Přeskládání selhalo: ${data.message}`
+					: `Přeskládání selhalo (HTTP ${res.status}).`;
+				rebuildVysledek.className = "admin-hint admin-hint--spatne";
+			} else {
+				rebuildVysledek.textContent = `Přeskládáno: ${data.puvodniPocet ?? "?"} → ${data.novyPocet} fotek v indexu.`;
+				rebuildVysledek.className = "admin-hint";
+			}
+			rebuildVysledek.hidden = false;
+			// Čísla na obrazovce už po přeskládání nemusí sedět — natáhnout znovu.
+			zneplatnitCache();
+			await nactiStav();
+		} catch (chyba) {
+			console.error("[admin] /admin/rebuild selhalo:", chyba);
+			rebuildVysledek.textContent = "Server neodpověděl. Zkus to znovu.";
+			rebuildVysledek.className = "admin-hint admin-hint--spatne";
+			rebuildVysledek.hidden = false;
+		} finally {
+			rebuildBtn.disabled = false;
+		}
+	});
+
+	// ---------------------------------------------------------------------
+	// Obrazovka 3 — klíčová slova
+	// ---------------------------------------------------------------------
+
+	let klicovaSlovaNactena = false;
+
+	function radekKlicovehoSlova(polozka: { klicoveSlovo: string; pocet: number }, zvyraznitJednicku: boolean) {
+		const zvyraznit = zvyraznitJednicku && polozka.pocet === 1;
+		return `<tr${zvyraznit ? ' class="admin-radek-tabulky--zvyrazneny"' : ""}><td class="admin-mono">${escapovat(polozka.klicoveSlovo)}</td><td class="admin-th-cislo">${polozka.pocet}</td></tr>`;
+	}
+
+	async function nactiKlicovaSlova() {
+		const nacitani = document.querySelector<HTMLElement>("#admin-klicova-slova-nacitani")!;
+		const chybaEl = document.querySelector<HTMLElement>("#admin-klicova-slova-chyba")!;
+		const obsah = document.querySelector<HTMLElement>("#admin-klicova-slova-obsah")!;
+
+		nacitani.hidden = false;
+		obsah.hidden = true;
+		skryjChybu(chybaEl);
+
+		try {
+			const report = posledniReport ?? (await nactiReportPokudChybi());
+			if (!report) {
+				ukazChybu(chybaEl, "Report se nepodařilo načíst.");
+				return;
+			}
+
+			// Funkční klíčová slova s prefixem MH- se počítají zvlášť, aby mezi
+			// podezřelými nepřekážela (MH-gallery-index-scotland má počet 1 správně).
+			const podezrela = report.klicovaSlova.filter((k) => !k.klicoveSlovo.startsWith("MH-"));
+			const funkcni = report.klicovaSlova.filter((k) => k.klicoveSlovo.startsWith("MH-"));
+
+			const tabulkaPodezrela = document.querySelector<HTMLTableSectionElement>(
+				"#admin-tabulka-klicova-slova",
+			)!;
+			tabulkaPodezrela.innerHTML = podezrela.length
+				? podezrela.map((p) => radekKlicovehoSlova(p, true)).join("")
+				: '<tr><td colspan="2" class="admin-prazdno">Žádná klíčová slova.</td></tr>';
+
+			const tabulkaFunkcni = document.querySelector<HTMLTableSectionElement>(
+				"#admin-tabulka-mh-klicova-slova",
+			)!;
+			tabulkaFunkcni.innerHTML = funkcni.length
+				? funkcni.map((p) => radekKlicovehoSlova(p, false)).join("")
+				: '<tr><td colspan="2" class="admin-prazdno">Žádná.</td></tr>';
+
+			obsah.hidden = false;
+			klicovaSlovaNactena = true;
+		} catch (chyba) {
+			console.error("[admin] načtení klíčových slov selhalo:", chyba);
+			ukazChybu(chybaEl, "Server neodpověděl. Zkus to znovu.");
+		} finally {
+			nacitani.hidden = true;
+		}
+	}
+
+	async function nactiReportPokudChybi(): Promise<ReportOdpoved | null> {
+		if (posledniReport) return posledniReport;
+		const res = await adminFetch("/admin/report");
+		if (!res.ok) return null;
+		posledniReport = await res.json();
+		return posledniReport;
+	}
+
+	function zneplatnitCache() {
+		posledniReport = null;
+		stavNacten = false;
+		klicovaSlovaNactena = false;
+		hledaniNacteno = false;
+	}
+
+	// ---------------------------------------------------------------------
+	// Obrazovka 4 — najít fotku a odebrat
+	// ---------------------------------------------------------------------
+
+	interface Polozka {
+		klic: string;
+		klicovaSlova: string[];
+		pocetNahledu: number;
+		selhalo: boolean;
+	}
+
+	let hledaniNacteno = false;
+	let hledatelnePolozky: Polozka[] = [];
+
+	function pocetGalerii(n: number): string {
+		if (n === 1) return "1 galerie";
+		if (n >= 2 && n <= 4) return `${n} galerie`;
+		return `${n} galerií`;
+	}
+
+	function pocetNahleduText(n: number): string {
+		if (n === 1) return `${n} náhled`;
+		if (n >= 2 && n <= 4) return `${n} náhledy`;
+		return `${n} náhledů`;
+	}
+
+	function galerieProPolozku(polozka: Polozka): string[] {
+		const fotkaPodobna = { klicovaSlova: polozka.klicovaSlova } as Fotka;
+		return GALERIE.filter((g) => odpovidaKlicovemuSlovu(fotkaPodobna, g.klic)).map((g) => g.nazev);
+	}
+
+	async function nactiHledani() {
+		const nacitani = document.querySelector<HTMLElement>("#admin-fotka-nacitani")!;
+		const chybaEl = document.querySelector<HTMLElement>("#admin-fotka-chyba")!;
+
+		nacitani.hidden = false;
+		skryjChybu(chybaEl);
+
+		try {
+			const [index, report] = await Promise.all([nacistIndex(), nactiReportPokudChybi()]);
+			const zIndexu: Polozka[] = (index.fotky ?? []).map((f) => ({
+				klic: f.klic,
+				klicovaSlova: Array.isArray(f.klicovaSlova) ? f.klicovaSlova.map(String) : [],
+				pocetNahledu: f.odvozene?.length ?? 0,
+				selhalo: false,
+			}));
+			// Selhané fotky (viz /admin/report) nejsou v /api/index.json — nikdy
+			// nedostaly úspěšný záznam. Zahrnují se sem, aby šly najít a odebrat
+			// i ony, ne jen fotky, které se úspěšně zpracovaly.
+			const zeSelhanych: Polozka[] = (report?.selhaneFotky ?? []).map((f) => ({
+				klic: f.klic,
+				klicovaSlova: [],
+				pocetNahledu: 0,
+				selhalo: true,
+			}));
+			hledatelnePolozky = [...zIndexu, ...zeSelhanych];
+			hledaniNacteno = true;
+			vykresliVysledkyHledani(dotazEl.value);
+		} catch (chyba) {
+			console.error("[admin] načtení seznamu fotek selhalo:", chyba);
+			ukazChybu(chybaEl, "Server neodpověděl. Zkus to znovu.");
+		} finally {
+			nacitani.hidden = true;
+		}
+	}
+
+	const dotazEl = document.querySelector<HTMLInputElement>("#admin-fotka-q")!;
+	const vysledkyEl = document.querySelector<HTMLElement>("#admin-fotka-vysledky")!;
+
+	function vykresliVysledkyHledani(dotaz: string) {
+		const q = dotaz.trim().toLowerCase();
+		const shody = q ? hledatelnePolozky.filter((p) => p.klic.toLowerCase().includes(q)) : hledatelnePolozky;
+
+		if (shody.length === 0) {
+			vysledkyEl.innerHTML = `<p class="admin-prazdno">${q ? "Nic neodpovídá hledanému textu." : "Žádné fotky k nalezení."}</p>`;
+		} else {
+			vysledkyEl.innerHTML = shody
+				.slice(0, 50)
+				.map((p) => {
+					const pocet = galerieProPolozku(p).length;
+					return `<div class="admin-radek admin-radek--klikaci" data-klic="${escapovat(p.klic)}" role="button" tabindex="0"><span class="admin-radek-k admin-mono">${escapovat(p.klic)}</span><span class="admin-radek-v">${p.selhalo ? "zpracování selhalo" : pocetGalerii(pocet)}</span></div>`;
+				})
+				.join("");
+		}
+		vysledkyEl.hidden = false;
+	}
+
+	dotazEl.addEventListener("input", () => {
+		if (hledaniNacteno) vykresliVysledkyHledani(dotazEl.value);
+	});
+
+	const hledaniSekce = document.querySelector<HTMLElement>("#admin-fotka-hledani")!;
+	const detailSekce = document.querySelector<HTMLElement>("#admin-fotka-detail")!;
+	let vybranaPolozka: Polozka | null = null;
+
+	vysledkyEl.addEventListener("click", (event) => {
+		const radek = (event.target as HTMLElement).closest<HTMLElement>(".admin-radek--klikaci");
+		if (radek?.dataset.klic) otevriDetail(radek.dataset.klic);
+	});
+	vysledkyEl.addEventListener("keydown", (event) => {
+		if (event.key !== "Enter" && event.key !== " ") return;
+		const radek = (event.target as HTMLElement).closest<HTMLElement>(".admin-radek--klikaci");
+		if (radek?.dataset.klic) {
+			event.preventDefault();
+			otevriDetail(radek.dataset.klic);
+		}
+	});
+
+	function otevriDetail(klic: string) {
+		const polozka = hledatelnePolozky.find((p) => p.klic === klic);
+		if (!polozka) return;
+		vybranaPolozka = polozka;
+
+		document.querySelector("#admin-fotka-detail-klic")!.textContent = polozka.klic;
+		document.querySelector("#admin-fotka-detail-klicova-slova")!.textContent = polozka.klicovaSlova.length
+			? polozka.klicovaSlova.join(", ")
+			: "žádná";
+		const galerie = galerieProPolozku(polozka);
+		document.querySelector("#admin-fotka-detail-galerie")!.textContent = galerie.length
+			? galerie.join(", ")
+			: "žádná";
+		document.querySelector("#admin-fotka-detail-smaze")!.textContent = polozka.selhalo
+			? "originál (zpracování se nezdařilo, žádné náhledy nevznikly)"
+			: `originál + ${pocetNahleduText(polozka.pocetNahledu)}`;
+
+		skryjChybu(document.querySelector("#admin-fotka-akce-chyba")!);
+		hledaniSekce.hidden = true;
+		detailSekce.hidden = false;
+	}
+
+	function zavriDetail() {
+		vybranaPolozka = null;
+		detailSekce.hidden = true;
+		hledaniSekce.hidden = false;
+	}
+
+	document.querySelector("#admin-fotka-zpet")!.addEventListener("click", zavriDetail);
+	document.querySelector("#admin-fotka-zrusit")!.addEventListener("click", zavriDetail);
+
+	document.querySelector("#admin-fotka-odebrat")!.addEventListener("click", async () => {
+		if (!vybranaPolozka) return;
+		const klic = vybranaPolozka.klic;
+		const tlacitko = document.querySelector<HTMLButtonElement>("#admin-fotka-odebrat")!;
+		const akceChyba = document.querySelector<HTMLElement>("#admin-fotka-akce-chyba")!;
+		skryjChybu(akceChyba);
+		tlacitko.disabled = true;
+
+		try {
+			const res = await adminFetch(`/admin/forget?klic=${encodeURIComponent(klic)}`, {
+				method: "POST",
+			});
+			if (!res.ok) {
+				ukazChybu(akceChyba, await zpravaZOdpovedi(res, "Odstranění selhalo"));
+				return;
+			}
+			// Fotka je pryč — vyřadit z lokálního seznamu, zneplatnit vše
+			// odvozené (stav, klíčová slova) a vrátit se na hledání.
+			hledatelnePolozky = hledatelnePolozky.filter((p) => p.klic !== klic);
+			zneplatnitCache();
+			zavriDetail();
+			vykresliVysledkyHledani(dotazEl.value);
+			hledaniNacteno = true;
+		} catch (chyba) {
+			console.error("[admin] /admin/forget selhalo:", chyba);
+			ukazChybu(akceChyba, "Server neodpověděl. Zkus to znovu.");
+		} finally {
+			tlacitko.disabled = false;
+		}
+	});
+</script>
+
+<style is:global>
+	/* Vlastní styly jen pro /admin — pracovní nástroj, ne prezentace webu
+	   (viz zadání fáze 7), proto nejde do global.css, ale barevné a
+	   typografické TOKENY z global.css se přesto beze změny přebírají
+	   (žádný hex kód napřímo, viz DESIGN.md sekce 3). Stránka nepoužívá
+	   <Base>, takže tu chybí .hlavicka/.paticka a jejich odsazení — layout
+	   si řeší sama.
+
+	   `is:global` je tu záměr, ne opomenutí: většina obsahu (řádky, tabulky,
+	   dlaždice se statistikami) se skládá za běhu přes `innerHTML` v <script>
+	   níže, a Astrovo scopování (data-astro-cid-*) se přidává jen prvkům
+	   v šabloně při buildu — na prvky vzniklé za běhu by scoped <style>
+	   vůbec neplatil. Třídy mají všechny předponu `admin-`, takže riziko
+	   kolize s global.css je nulové. */
+
+	.admin-telo {
+		min-height: 100vh;
+	}
+
+	.admin-wrap {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: var(--mezera-6) var(--mezera-3) var(--mezera-12);
+	}
+
+	.admin-nadpis {
+		margin-bottom: var(--mezera-1);
+	}
+
+	.admin-podnadpis {
+		color: var(--barva-text-tlumeny);
+		font-size: 14px;
+		margin: 0 0 var(--mezera-4);
+	}
+
+	.admin-nacitani {
+		color: var(--barva-text-tlumeny);
+		font-size: 14px;
+	}
+
+	.admin-panel-jednoduchy {
+		max-width: 420px;
+	}
+
+	.admin-pole {
+		margin-bottom: var(--mezera-3);
+	}
+
+	.admin-pole label {
+		display: block;
+		font-size: 13px;
+		margin-bottom: var(--mezera-1);
+	}
+
+	.admin-pole input {
+		width: 100%;
+		background: transparent;
+		border: 1px solid var(--barva-oddelovac);
+		color: var(--barva-textu);
+		font-family: var(--pismo);
+		font-size: 15px;
+		padding: 10px 12px;
+	}
+
+	.admin-pole input:focus-visible {
+		outline: 1px solid var(--barva-textu);
+		outline-offset: 1px;
+	}
+
+	.admin-napoveda {
+		font-size: 12.5px;
+		color: var(--barva-text-tlumeny);
+		margin: var(--mezera-1) 0 0;
+	}
+
+	.admin-napoveda code {
+		font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	}
+
+	.admin-btn {
+		display: inline-block;
+		background: var(--barva-textu);
+		color: var(--barva-pozadi);
+		border: 1px solid var(--barva-textu);
+		font-family: var(--pismo);
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0;
+		padding: 9px 20px;
+		cursor: pointer;
+	}
+
+	.admin-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+
+	.admin-btn--ghost {
+		background: transparent;
+		color: var(--barva-textu);
+		border-color: var(--barva-oddelovac);
+	}
+
+	/* Jediná destruktivní akce v celém rozhraní — vědomě jediné místo, kde se
+	   používá plný akcent (--barva-zvyrazneni) na tomhle panelu. */
+	.admin-btn--danger {
+		background: transparent;
+		color: var(--barva-zvyrazneni);
+		border-color: var(--barva-zvyrazneni);
+	}
+
+	.admin-chyba {
+		color: var(--barva-zvyrazneni);
+		font-size: 13.5px;
+		margin: var(--mezera-2) 0 0;
+	}
+
+	.admin-hint {
+		color: var(--barva-text-tlumeny);
+		font-size: 13px;
+		margin: var(--mezera-1) 0 0;
+	}
+
+	.admin-hint--spatne {
+		color: var(--barva-zvyrazneni);
+	}
+
+	.admin-mono {
+		font-family: ui-monospace, "SF Mono", Menlo, monospace;
+		font-size: 0.92em;
+		overflow-wrap: anywhere;
+	}
+
+	/* --- Taby --- */
+
+	.admin-taby {
+		display: flex;
+		gap: var(--mezera-4);
+		border-bottom: 1px solid var(--barva-oddelovac);
+		margin-bottom: var(--mezera-4);
+	}
+
+	.admin-tab {
+		background: none;
+		border: none;
+		color: var(--barva-text-tlumeny);
+		font-family: var(--pismo);
+		font-size: 14px;
+		padding: 0 0 var(--mezera-2);
+		cursor: pointer;
+		border-bottom: 2px solid transparent;
+	}
+
+	.admin-tab[aria-current="true"] {
+		color: var(--barva-textu);
+		border-bottom-color: var(--barva-textu);
+	}
+
+	/* --- Stat dlaždice (Obrazovka 2) ---
+	   Chyba (červená, --barva-zvyrazneni) vs. upozornění (tlumená varianta,
+	   --barva-akcent-tlumeny) se tu vědomě zobrazují na jedné obrazovce
+	   současně — DESIGN.md sekci 3 (žádné dva akcenty pohromadě) je to
+	   výjimka: bez ní by tahle diagnostická obrazovka nedokázala ukázat
+	   rozdíl mezi "chybou" a "jen se podívej", což zadání fáze 7 výslovně
+	   žádá (souhrn: "Obrazovka nesmí tvrdit jistotu, kterou nemá"). */
+	.admin-staty {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+		gap: 1px;
+		background: var(--barva-oddelovac);
+		border: 1px solid var(--barva-oddelovac);
+		margin-bottom: var(--mezera-6);
+	}
+
+	.admin-stat {
+		background: var(--barva-pozadi);
+		padding: var(--mezera-2) var(--mezera-2);
+	}
+
+	.admin-stat-n {
+		font-family: var(--pismo);
+		font-weight: 200;
+		font-size: 28px;
+		line-height: 1;
+	}
+
+	.admin-stat-l {
+		font-size: 11.5px;
+		color: var(--barva-text-tlumeny);
+		margin-top: var(--mezera-1);
+	}
+
+	.admin-stat--spatne .admin-stat-n {
+		color: var(--barva-zvyrazneni);
+	}
+
+	.admin-stat--upozorneni .admin-stat-n {
+		color: var(--barva-akcent-tlumeny);
+	}
+
+	/* --- Panely (sekce se seznamy) --- */
+
+	.admin-panel {
+		border: 1px solid var(--barva-oddelovac);
+		margin-bottom: var(--mezera-3);
+	}
+
+	.admin-panel h2 {
+		font-size: 15px;
+		font-weight: 400;
+		letter-spacing: 0;
+		margin: 0;
+		padding: var(--mezera-2) var(--mezera-2);
+		border-bottom: 1px solid var(--barva-oddelovac);
+	}
+
+	.admin-panel-telo {
+		padding: var(--mezera-1) var(--mezera-2) var(--mezera-2);
+	}
+
+	.admin-podsekce {
+		font-size: 16px;
+		font-weight: 300;
+		margin: var(--mezera-6) 0 var(--mezera-1);
+	}
+
+	.admin-radek {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: var(--mezera-2);
+		padding: var(--mezera-1) 0;
+		border-top: 1px dashed var(--barva-oddelovac);
+		font-size: 13.5px;
+	}
+
+	.admin-radek:first-child {
+		border-top: none;
+	}
+
+	.admin-radek-k {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	.admin-radek-v {
+		color: var(--barva-text-tlumeny);
+		white-space: nowrap;
+		flex: none;
+	}
+
+	.admin-radek-v--spatne {
+		color: var(--barva-zvyrazneni);
+	}
+
+	.admin-radek-v--upozorneni {
+		color: var(--barva-akcent-tlumeny);
+	}
+
+	.admin-radek--klikaci {
+		cursor: pointer;
+	}
+
+	.admin-radek--klikaci:hover,
+	.admin-radek--klikaci:focus-visible {
+		color: var(--barva-zvyrazneni);
+		outline: none;
+	}
+
+	.admin-radek-skupina {
+		border-top: 1px dashed var(--barva-oddelovac);
+		padding-top: var(--mezera-1);
+		margin-top: var(--mezera-1);
+	}
+
+	.admin-radek-skupina:first-child {
+		border-top: none;
+		padding-top: 0;
+		margin-top: 0;
+	}
+
+	.admin-radek-skupina .admin-radek:first-child {
+		border-top: none;
+	}
+
+	.admin-prazdno {
+		color: var(--barva-text-tlumeny);
+		font-size: 13.5px;
+		margin: var(--mezera-1) 0;
+	}
+
+	.admin-akce {
+		display: flex;
+		gap: var(--mezera-2);
+		flex-wrap: wrap;
+		margin-top: var(--mezera-4);
+	}
+
+	/* --- Tabulka klíčových slov --- */
+
+	.admin-tablewrap {
+		overflow-x: auto;
+	}
+
+	table {
+		border-collapse: collapse;
+		width: 100%;
+		font-size: 13.5px;
+	}
+
+	th,
+	td {
+		text-align: left;
+		padding: 7px 10px;
+		border-bottom: 1px solid var(--barva-oddelovac);
+	}
+
+	th {
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--barva-text-tlumeny);
+		font-weight: 400;
+	}
+
+	.admin-th-cislo {
+		text-align: right;
+		white-space: nowrap;
+	}
+
+	td.admin-th-cislo {
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* Zvýrazňuje se počet 1, ne "chyba" — slovo na jediné fotce může být
+	   v pořádku. Tlumená varianta zvýraznění, ne plný akcent: obrazovka na
+	   nic neupozorňuje s jistotou, kterou nemá (viz zadání fáze 7). */
+	tr.admin-radek-tabulky--zvyrazneny td {
+		color: var(--barva-akcent-tlumeny);
+	}
+
+	@media (max-width: 480px) {
+		.admin-akce {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+	}
+</style>

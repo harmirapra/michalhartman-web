@@ -52,6 +52,19 @@ async function writeFailedRecord(record) {
 	await writeFileAtomic(failedRecordPath(record.klic), JSON.stringify(record, null, 2));
 }
 
+// POST /admin/forget: smaže záznam „hotovo" pro klíč, který se předtím ověřil
+// proti readAllPhotoRecords() — cesta na disku se skládá jen tady, na jednom
+// místě, ne znovu na volající straně.
+async function deletePhotoRecord(key) {
+	try {
+		await fsp.unlink(photoRecordPath(key));
+	} catch (err) {
+		if (err.code !== 'ENOENT') {
+			throw err;
+		}
+	}
+}
+
 // Úspěšné zpracování maže případnou starou značku selhání pro týž klíč —
 // jinak by se stará chyba (z předchozího, opraveného obsahu) donekonečna
 // vlekla v reportu vedle nového, platného záznamu.
@@ -100,6 +113,7 @@ export {
 	writePhotoRecord,
 	writeFailedRecord,
 	clearFailedRecord,
+	deletePhotoRecord,
 	readAllPhotoRecords,
 	readAllFailedRecords,
 };

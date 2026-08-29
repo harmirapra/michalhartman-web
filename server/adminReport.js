@@ -58,6 +58,7 @@ async function handleAdminReport(_req, res) {
 	const bezKlicovychSlov = photoRecords.filter((r) => (r.klicovaSlova ?? []).length === 0);
 
 	res.status(200).json({
+		aktualizovano: index.aktualizovano,
 		souhrn: {
 			ulozeno: pocetOriginalu,
 			vIndexu: index.fotky.length,

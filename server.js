@@ -23,6 +23,7 @@ import express from 'express';
 import sharp from 'sharp';
 import { handleAdminFiles } from './server/adminFiles.js';
 import { requireAdminToken } from './server/adminAuth.js';
+import { handleAdminForget } from './server/adminForget.js';
 import { handleAdminRebuild } from './server/adminRebuild.js';
 import { handleAdminReport } from './server/adminReport.js';
 import { DERIVED_DIR, ensureDataDirs } from './server/dataDir.js';
@@ -61,8 +62,24 @@ app.disable('x-powered-by');
 // neúspěšných pokusů (viz server/adminAuth.js) by házelo všechny do jednoho pytle.
 app.set('trust proxy', 1);
 
-// /admin/* musí být zapojené dřív, než cokoliv (i případný budoucí body
-// parser) sáhne na tělo požadavku — ověření tokenu proběhne jako úplně
+// Statická stránka /admin (fáze 7 — odemykací obrazovka + klientský JS) se
+// servíruje BEZ tokenu, a musí být zapojená PŘED admin routerem níže: token
+// se ověřuje až u jednotlivých volání, která stránka sama posílá (hlavička
+// Authorization). Kdyby byla za `requireAdminToken`, nešlo by ji vůbec
+// načíst — token by nemělo kam se zadat. Servíruje jen `dist/admin/`, takže
+// požadavky na `/admin/upload`, `/admin/stav` apod. (žádný soubor toho
+// jména v `dist/admin/` neexistuje) tudy jen protečou k routeru pod tím.
+app.use(
+	'/admin',
+	express.static(path.join(distDir, 'admin'), {
+		setHeaders(res) {
+			res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+		},
+	}),
+);
+
+// /admin/* (API) musí být zapojené dřív, než cokoliv (i případný budoucí
+// body parser) sáhne na tělo požadavku — ověření tokenu proběhne jako úplně
 // první věc, bez čtení dat od klienta.
 const adminRouter = express.Router();
 adminRouter.use(requireAdminToken);
@@ -71,6 +88,7 @@ adminRouter.get('/stav', handleStav);
 adminRouter.get('/files', handleAdminFiles);
 adminRouter.post('/rebuild', handleAdminRebuild);
 adminRouter.get('/report', handleAdminReport);
+adminRouter.post('/forget', handleAdminForget);
 app.use('/admin', adminRouter);
 
 app.use(compression());
