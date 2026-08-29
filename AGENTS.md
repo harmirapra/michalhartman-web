@@ -149,6 +149,49 @@ pošle rozdíl po jedné (`POST /admin/upload`), zavolá `POST /admin/rebuild`
   `selhalo > 0`, nebo když v tomhle běhu selhal upload/rebuild — i když
   jednotlivá selhaná fotka běh sama o sobě nezastaví.
 
+## Galerie (fáze 5)
+
+Komponenta `src/components/MediaGalerie.astro` — parametry `klicoveSlovo`
+a `layout` (zatím jen `"radky"`). **Nevykresluje se při buildu.** Astro
+vygeneruje jen prázdný kontejner s parametry v `data-*` atributech;
+klientský skript v komponentě si po načtení stránky vyzvedne
+`GET /api/index.json`, vyfiltruje fotky podle klíčového slova (přesná shoda,
+bez ohledu na velikost písmen) a poskládá mřížku. Nová fotka se tak objeví
+v galerii hned po `POST /admin/rebuild`, bez nového buildu/deploye.
+
+- **Pořadí je náhodné**, losuje se znovu při každém načtení stránky.
+- **Prázdná galerie je legitimní stav** (nová galerie bez nahraných fotek) —
+  žádná hláška, žádná chyba v konzoli, jen prázdné místo.
+- **Layout „radky"** — jeden flex kontejner s `flex-wrap`, `gap: 5px`, každá
+  fotka má `height` z tokenu `--galerie-radek-vyska` a `flex-grow` úměrný
+  poměru stran (nastavuje JS přes vlastní proměnnou `--polozka-pomer`).
+  Prohlížeč sám rozlomí fotky do řádků a v rámci každého řádku flex-grow
+  dorovná šířku na 100 % — žádný layout balíček. Na mobilu (≤767 px) jeden
+  sloupec, fotky na plnou šířku.
+- **Lightbox: PhotoSwipe v5** (`photoswipe`, přišpendlená verze), napojení
+  přes `photoswipe/lightbox` a `data-pswp-width`/`data-pswp-height` na
+  odkazu kolem náhledu. Počítadlo a šipky zapnuté (výchozí chování),
+  stažení vypnuté (jádro PhotoSwipe v5 žádné tlačítko stažení nemá, nic se
+  sem nepřidává). Pozadí čistě černé (`--pswp-bg` přepsané na token
+  `--barva-pozadi`, `bgOpacity: 1`) — žádný knihovní výchozí styl.
+- **`ImageObject` (schema.org)** — mikrodata (`itemscope`/`itemtype` na
+  odkazu, `<meta itemprop>` uvnitř) u každé fotky, z dat, která index nese
+  stejně (`contentUrl`, `creator`, `copyrightNotice`, `license`, `caption`).
+- **`width`/`height` na každém `<img>` povinně** (z `rozmery` v indexu) —
+  bez nich stránka při načítání poskakuje.
+- Alt text: kaskáda `titulek` fotky → název galerie (z `<h1>` stránky).
+  Nikdy prázdný.
+
+Stránka `/scotland/` (`src/pages/scotland.astro`) je první, co komponentu
+používá — `klicoveSlovo="Scotland"`. `<h1>` je v HTML kvůli SEO
+a odečítačům, ale vizuálně skrytý třídou `.vizualne-skryty` (`clip-path`,
+nikdy `display: none`). Odkaz „Galerie" v drobečkové navigaci je zatím
+`.odkaz-vzhled` span, ne `<a>` — rozcestník `/gallery/` vzniká až ve fázi 6.
+
+Rozcestník `/gallery/` a další galerie (`/greece/`, `/france/`) jsou fáze 6.
+Ostatní layouty z architektury (`mrizka`, `zdivo`, `mozaika`, `karusel`) se
+přidají, až je bude nějaká galerie potřebovat.
+
 ## Co agent nesmí
 
 - číst ani commitovat `.env` a jiné soubory s klíči,

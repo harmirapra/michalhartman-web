@@ -50,6 +50,12 @@
 
 	/* Značka v hlavičce */
 	--znacka-velikost: 20px;
+
+	/* Galerie (layout „radky") — základní výška řádku, měřeno ve wireframu
+	   Galerie.dc.html. Nemá obdobu v hlavní škále (stejný precedens jako
+	   --mezera-about-gap výš), platí jen na desktopu — na mobilu je jeden
+	   sloupec fotek na plnou šířku (viz .media-galerie níže). */
+	--galerie-radek-vyska: 260px;
 }
 
 @media (max-width: 1024px) {
@@ -435,6 +441,103 @@ main.bez-hero {
    na desktopu skryl spolu s .about-nadpis-sekce. Jen vizuální odstup shora. */
 .about-kvalifikace {
 	margin-top: var(--mezera-3);
+}
+
+/* ---------- vizuálně skrytý nadpis — fáze 5 ---------- */
+/* Stránka galerie (a další bez vlastního viditelného nadpisu) potřebuje h1
+   v HTML kvůli vyhledávačům a odečítačům obrazovky, ale vizuálně nemá být
+   vidět. Nikdy display:none ani visibility:hidden — to nadpis odstraní
+   i pro asistivní technologie, čímž celé opatření ztratí smysl. Hodnoty
+   podle wireframu Galerie.dc.html. */
+.vizualne-skryty {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ---------- drobečková navigace — fáze 5 ---------- */
+
+.drobecky {
+	padding: 0 var(--mezera-8);
+	margin: 0 0 var(--mezera-4);
+	font-size: var(--text-velikost);
+	font-weight: 300;
+}
+
+.drobecky .sip {
+	/* 6px — měřeno ve wireframu, nesedí do rytmu 8px (stejný precedens jako
+	   .sip výš u odsazení jazyků v hlavičce). */
+	color: var(--barva-oddelovac-text);
+	margin: 0 6px;
+}
+
+@media (max-width: 767px) {
+	.drobecky {
+		padding: 0 var(--mezera-3);
+		margin: 0 0 var(--mezera-3);
+	}
+}
+
+/* ---------- komponenta MediaGalerie, layout „radky" — fáze 5 ---------- */
+/* Zarovnané řádky bez JS knihovny: jeden flex kontejner s wrapem. Prohlížeč
+   sám rozlomí položky do řádků podle jejich přirozené šířky (aspect-ratio ×
+   --galerie-radek-vyska) a v rámci KAŽDÉHO řádku pak flex-grow dorovná
+   šířku přesně na 100 % — to je celý trik, žádný layout balíček. flex-grow
+   se počítá v JS z poměru stran konkrétní fotky (viz MediaGalerie.astro)
+   a předává se přes vlastní proměnnou --polozka-pomer, aby šlo na mobilu
+   flex-grow vypnout normálním pravidlem v CSS, ne !important přes inline styl. */
+
+.media-galerie {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	padding: 0 var(--mezera-8);
+}
+
+.media-galerie-polozka {
+	display: block;
+	height: var(--galerie-radek-vyska);
+	flex-grow: var(--polozka-pomer, 1);
+}
+
+.media-galerie-polozka img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.media-galerie-popisek {
+	display: block;
+	color: var(--barva-text-tlumeny);
+	font-size: var(--text-velikost);
+	margin-top: var(--mezera-1);
+}
+
+@media (max-width: 767px) {
+	.media-galerie {
+		flex-direction: column;
+		padding: 0 var(--mezera-3);
+	}
+
+	.media-galerie-polozka {
+		height: auto;
+		width: 100%;
+		flex-grow: 0;
+	}
+}
+
+/* ---------- PhotoSwipe — fáze 5 ---------- */
+/* Žádná knihovna nesmí vnucovat vlastní styl: pozadí lightboxu je čistá
+   černá plocha z designového tokenu, ne knihovní výchozí hodnota. */
+.pswp {
+	--pswp-bg: var(--barva-pozadi);
 }
 
 /* ---------- textová stránka (Ochrana osobních údajů, Impressum) — úkol 1 ---------- */

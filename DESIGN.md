@@ -266,3 +266,42 @@ pro plné znění použité ve wireframu.
 **Živé CSS obsahuje drobné artefakty, které se záměrně nepřebírají:**
 `line-height:1.2px` u hero nadpisu (skoro jistě měl být bezjednotkový
 `1.2`) a nepoužitý `text-stroke-color:#000` bez nastavené šířky.
+
+---
+
+## 12. Galerie — komponenta MediaGalerie a stránka „Skotsko" (fáze 5)
+
+Ověřeno wireframem v Claude Design canvas (`Galerie.dc.html`,
+`Galerie-Mobil.dc.html`, 29. 8. 2026) — hodnoty jsou měřené na živém webu,
+ne odhadnuté. Detaily mechaniky (proč se komponenta vykresluje v prohlížeči,
+tvar dat z indexu) jsou v `AGENTS.md`, sekce „Galerie (fáze 5)".
+
+**Stránka nemá viditelný nadpis.** `<h1>` zůstává v HTML (SEO, odečítače
+obrazovky), ale je vizuálně skrytý třídou `.vizualne-skryty` (`clip-path`,
+nikdy `display: none` ani `visibility: hidden`).
+
+**Drobečková navigace** vlevo, zarovnaná se stejným odsazením jako mřížka
+fotek (`padding: 0 64px` desktop / `0 24px` mobil — tokeny `--mezera-8`
+a `--mezera-3`). Oddělovač `»` v tlumené barvě (`--barva-oddelovac-text`).
+Odkaz „Galerie" je `.odkaz-vzhled` span, dokud nevznikne `/gallery/` (fáze 6).
+
+**Layout „radky" — zarovnané řádky bez JS knihovny.** Jeden flex kontejner
+s `flex-wrap: wrap` a `gap: 5px`; každá fotka má pevnou výšku (token
+`--galerie-radek-vyska`, 260 px na desktopu) a `flex-grow` úměrný poměru
+stran. Prohlížeč sám rozláme fotky do řádků podle jejich přirozené šířky
+a v rámci každého řádku flex-grow dorovná šířku přesně na 100 % — to je
+celý trik, žádný masonry/justified balíček. Na mobilu (≤767 px) jeden
+sloupec, fotky na plnou šířku.
+
+**Lightbox — PhotoSwipe v5.** Počítadlo a šipky zapnuté, swipe
+a klávesnice fungují (výchozí chování knihovny), **stažení vypnuté**
+(v jádru PhotoSwipe v5 žádné tlačítko stažení není, nic se nepřidává).
+Pozadí je čistě černá plocha z tokenu `--barva-pozadi`
+(`--pswp-bg` přepsané, `bgOpacity: 1`), bez zaoblených rohů nebo rámečků,
+které by knihovna jinak vnucovala.
+
+**Popisek fotky je na stránce galerie vypnutý** (parametr `popisky`,
+výchozí `false`) — zapíná se až na rozcestníku `/gallery/` ve fázi 6.
+
+**Ostatní layouty z architektury** (`mrizka`, `zdivo`, `mozaika`, `karusel`)
+se nedělaly dopředu — přidají se, až je bude nějaká galerie potřebovat.
