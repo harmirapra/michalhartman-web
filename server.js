@@ -55,7 +55,30 @@ adminRouter.get('/stav', handleStav);
 app.use('/admin', adminRouter);
 
 app.use(compression());
-app.use(express.static(distDir));
+
+// Soubory v /_astro/ nesou v názvu otisk obsahu, který Astro generuje při
+// buildu — pod stejnou adresou se tedy nikdy nezmění obsah. Smějí se proto
+// cachovat natvrdo a nadlouho. Bez tohohle je posílal express.static
+// s max-age=0, takže se prohlížeč ptal znovu při každém načtení stránky
+// a CDN na edge je neměla jak cachovat.
+app.use(
+	'/_astro',
+	express.static(path.join(distDir, '_astro'), {
+		immutable: true,
+		maxAge: '1y',
+	}),
+);
+
+// Zbytek (HTML, favicon, obrázky ve /img/) se pod stejnou adresou měnit MŮŽE
+// — HTML při každém nasazení. Proto se necachuje natrvalo, jen se povolí
+// revalidace: prohlížeč se zeptá, a když se nic nezměnilo, dostane 304.
+app.use(
+	express.static(distDir, {
+		setHeaders(res) {
+			res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+		},
+	}),
+);
 
 // Neznámá cesta = 404, žádný fallback na index.html (tohle není SPA).
 app.use((req, res) => {
