@@ -1,0 +1,421 @@
+#!/bin/bash
+# Publikační skript pro Mac — srovná intake složku se serverem.
+#
+# Celý úkon publikace je: Publish v Lightroomu, spustit tenhle skript.
+#
+#   1. projde intake složku rekurzivně
+#   2. spočítá otisk každé fotky            (shasum -a 256)
+#   3. zeptá se serveru, co už má            (GET  /admin/files)
+#   4. pošle rozdíl, po jedné                (POST /admin/upload)
+#   5. zavolá rebuild (jen když něco poslal)  (POST /admin/rebuild)
+#   6. vypíše souhrn                         (GET  /admin/report)
+#
+# Čistý bash + curl, žádný Node, žádný Python. Skript se spouští párkrát
+# ročně a musí přežít i aktualizaci macOS — proto jen nástroje, které jsou
+# v macOS vždy: /bin/bash, curl, shasum. Cíleně kompatibilní s výchozím
+# systémovým bashem (3.2 — macOS ho drží kvůli licenci), takže žádná
+# asociativní pole (`declare -A`), žádné `${var,,}` a podobné bashismy 4+.
+#
+# Skript si nedrží žádný stav — zdrojem pravdy je vždycky server
+# (GET /admin/files). Funguje z jakéhokoliv počítače, po přeinstalaci Macu
+# se nic neztratí, přerušený běh naváže sám při dalším spuštění.
+#
+# Přenos je vždy aditivní: skript nikdy nic na serveru nemaže podle toho,
+# co v intake složce chybí. Mazání je vždy vědomý akt jinou cestou
+# (webové rozhraní /admin, fáze mimo tenhle skript).
+
+set -u
+set -o pipefail
+
+# ---------------------------------------------------------------------------
+# Klíč fotky: relativní cesta -> slug. MUSÍ přesně sedět s server/slug.js,
+# jinak skript nepozná, že server fotku už má, a bude ji posílat pořád
+# dokola. Server dělá: NFD normalizace -> odstranění kombinujících znamének
+# (diakritiky) -> lowercase -> cokoliv mimo [a-z0-9] na jednu pomlčku ->
+# sloučení vícenásobných pomlček -> oříznutí pomlček na krajích. Segmenty
+# (podsložka/název) se spojují DVĚMA pomlčkami.
+#
+# `iconv -t UTF-8-MAC` dělá totéž co JS `.normalize('NFD')` — rozloží
+# písmeno s diakritikou na základní písmeno + kombinující znaménko (macOS
+# tenhle tvar používá pro názvy souborů, takže iconv ho umí přesně, na
+# rozdíl od `ASCII//TRANSLIT`, který u češtiny dává nesmysly typu "caf'e"
+# místo "cafe"). Kombinující znaménka (U+0300–U+036F) jsou v UTF-8 vždy
+# dvoubajtová se sekvencí 0xCC nebo 0xCD — proto je jde odstranit bez
+# závislosti na locale/Unicode podpoře v sed.
+slugify_segment() {
+	local raw="$1" nfd stripped lower
+	nfd=$(printf '%s' "$raw" | iconv -f UTF-8 -t UTF-8-MAC 2>/dev/null) || nfd="$raw"
+	stripped=$(LC_ALL=C printf '%s' "$nfd" | LC_ALL=C sed $'s/\xCC[\x80-\xBF]//g; s/\xCD[\x80-\xAF]//g')
+	lower=$(printf '%s' "$stripped" | tr '[:upper:]' '[:lower:]')
+	printf '%s' "$lower" | LC_ALL=C sed -E 's/[^a-z0-9]+/-/g; s/-+/-/g; s/^-+//; s/-+$//'
+}
+
+# relPath: cesta relativní k intake složce, např.
+# "Greece/GLR-DSC04130-Enhanced-NR-Milos bay.jpg" -> "greece--glr-dsc04130-enhanced-nr-milos-bay"
+# Vrací prázdný řetězec, když se cesta nedá bezpečně převést (shodné
+# chování s pathToKey vracejícím null v server/slug.js).
+path_to_key() {
+	local rel_path="$1" without_ext trimmed segment key=""
+	# Odstranit příponu jen z posledního segmentu (poslední ".xxx" v celé cestě) —
+	# stejné jako JS regex /\.[^./\\]+$/.
+	without_ext=$(printf '%s' "$rel_path" | LC_ALL=C sed -E 's/\.[^./\\]+$//')
+	trimmed=$(printf '%s' "$without_ext" | LC_ALL=C sed -E 's#^[/\\]+##; s#[/\\]+$##')
+	if [[ -z "$trimmed" ]]; then
+		return 1
+	fi
+	local old_ifs="$IFS"
+	IFS='/'
+	local -a raw_segments=()
+	# Rozdělit i na zpětná lomítka, i když se na macOS prakticky nevyskytnou.
+	trimmed=$(printf '%s' "$trimmed" | tr '\\' '/')
+	read -r -a raw_segments <<<"$trimmed"
+	IFS="$old_ifs"
+	for segment in "${raw_segments[@]}"; do
+		local slug
+		slug=$(slugify_segment "$segment")
+		if [[ -z "$slug" ]]; then
+			return 1
+		fi
+		if [[ -z "$key" ]]; then
+			key="$slug"
+		else
+			key="${key}--${slug}"
+		fi
+	done
+	printf '%s' "$key"
+}
+
+# ---------------------------------------------------------------------------
+# URL-encoding pro query parametr `path` (POST /admin/upload?path=...).
+# Čistý bash, bez závislosti na curl --data-urlencode (to by pro POST
+# s binárním tělem znamenalo extra síťový požadavek jen kvůli zakódování).
+urlencode() {
+	local raw="$1" out="" i c
+	local LC_ALL=C
+	for ((i = 0; i < ${#raw}; i++)); do
+		c="${raw:i:1}"
+		case "$c" in
+			[a-zA-Z0-9.~_-]) out+="$c" ;;
+			*) out+=$(printf '%%%02X' "'$c") ;;
+		esac
+	done
+	printf '%s' "$out"
+}
+
+# ---------------------------------------------------------------------------
+# Drobný JSON parser na míru odpovědím /admin/*. Odpovědi mají známý, plochý
+# tvar (viz server/adminFiles.js a server/adminReport.js) — nejde o obecný
+# JSON parser, jen o výtah konkrétních polí přes grep/sed, aby skript
+# nepotřeboval jq (na macOS není nikdy předinstalované).
+json_number() {
+	# json_number '<json>' 'nazevKlice'
+	printf '%s' "$1" | grep -oE "\"$2\"[[:space:]]*:[[:space:]]*[0-9]+" | head -1 | grep -oE '[0-9]+$'
+}
+
+json_string() {
+	# json_string '<json>' 'nazevKlice'
+	printf '%s' "$1" | grep -oE "\"$2\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | head -1 | LC_ALL=C sed -E 's/^"[^"]+"[[:space:]]*:[[:space:]]*"//; s/"$//'
+}
+
+json_bool() {
+	# json_bool '<json>' 'nazevKlice' -- vrací "true" / "false" / prázdné (chybí klíč)
+	printf '%s' "$1" | grep -oE "\"$2\"[[:space:]]*:[[:space:]]*(true|false)" | head -1 | grep -oE '(true|false)$'
+}
+
+# ---------------------------------------------------------------------------
+# Barvy — jen na terminálu, který je umí, a jen pokud si je uživatel
+# nevypnul (NO_COLOR).
+if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
+	C_OK=$'\033[32m'; C_WARN=$'\033[33m'; C_ERR=$'\033[31m'
+	C_MUTE=$'\033[90m'; C_BOLD=$'\033[1m'; C_RESET=$'\033[0m'
+else
+	C_OK=""; C_WARN=""; C_ERR=""; C_MUTE=""; C_BOLD=""; C_RESET=""
+fi
+
+# ---------------------------------------------------------------------------
+# Argumenty a nastavení.
+INTAKE_DEFAULT="$HOME/Pictures/MH-web/GalleryMedia"
+SERVER_DEFAULT="https://new.michalhartman.com"
+
+INTAKE_INPUT="${PUBLIKOVAT_FOTKY_INTAKE:-$INTAKE_DEFAULT}"
+SERVER_INPUT="${PUBLIKOVAT_FOTKY_SERVER:-$SERVER_DEFAULT}"
+
+print_help() {
+	cat <<EOF
+Použití: $(basename "$0") [--intake CESTA] [--server ADRESA]
+
+Projde intake složku, spočítá otisky fotek, zeptá se serveru, co už má,
+pošle rozdíl, zavolá rebuild indexu a vypíše souhrn.
+
+  --intake CESTA   Kořen intake složky (výchozí: $INTAKE_DEFAULT)
+  --server ADRESA  Adresa serveru, bez lomítka na konci
+                    (výchozí: $SERVER_DEFAULT)
+  -h, --help       Tahle nápověda
+
+Totéž jde nastavit proměnnými prostředí PUBLIKOVAT_FOTKY_INTAKE
+a PUBLIKOVAT_FOTKY_SERVER.
+
+Token se čte z klíčenky (položka "michalhartman-web-admin"), skript ho
+nikdy nevypisuje.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--intake)
+			INTAKE_INPUT="$2"
+			shift 2
+			;;
+		--intake=*)
+			INTAKE_INPUT="${1#--intake=}"
+			shift
+			;;
+		--server)
+			SERVER_INPUT="$2"
+			shift 2
+			;;
+		--server=*)
+			SERVER_INPUT="${1#--server=}"
+			shift
+			;;
+		-h | --help)
+			print_help
+			exit 0
+			;;
+		*)
+			echo "Neznámý parametr: $1" >&2
+			print_help >&2
+			exit 2
+			;;
+	esac
+done
+
+# Ořezat případné koncové lomítko u adresy serveru.
+SERVER="${SERVER_INPUT%/}"
+
+# Ruční rozbalení "~" — shell ho rozbalí sám jen na příkazové řádce
+# nezacitované, ne uvnitř proměnné prostředí nebo v uvozovkách.
+if [[ "$INTAKE_INPUT" == "~" ]]; then
+	INTAKE_INPUT="$HOME"
+elif [[ "$INTAKE_INPUT" == "~/"* ]]; then
+	INTAKE_INPUT="$HOME/${INTAKE_INPUT#"~/"}"
+fi
+
+if [[ ! -d "$INTAKE_INPUT" ]]; then
+	echo "${C_ERR}Intake složka neexistuje:${C_RESET} $INTAKE_INPUT" >&2
+	exit 1
+fi
+INTAKE="$(cd "$INTAKE_INPUT" && pwd)"
+
+# ---------------------------------------------------------------------------
+# Token z klíčenky. Nikdy se nevypisuje — ani v chybové hlášce, ani v -x.
+TOKEN="$(security find-generic-password -s michalhartman-web-admin -w 2>/dev/null)"
+if [[ -z "$TOKEN" ]]; then
+	cat >&2 <<EOF
+${C_ERR}Chybí přístupový token v klíčence.${C_RESET}
+
+Skript ho hledá pod položkou "michalhartman-web-admin". Ulož ho příkazem
+(TOKEN nahraď skutečnou hodnotou z Railway → proměnná ADMIN_TOKEN):
+
+  security add-generic-password -s michalhartman-web-admin -a "$(whoami)" -w "TOKEN"
+
+Pak spusť skript znovu.
+EOF
+	exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Pracovní adresář na dočasné soubory. Uklidí se vždy, i při přerušení.
+WORKDIR="$(mktemp -d)"
+trap 'rm -rf "$WORKDIR"' EXIT
+
+LOCAL_LIST="$WORKDIR/local.tsv"      # relPath \t key \t hash
+SERVER_MAP="$WORKDIR/server.tsv"     # key \t hash
+TO_UPLOAD="$WORKDIR/to_upload.tsv"   # relPath \t key
+UPLOAD_RESULTS="$WORKDIR/results.tsv" # key \t status(ok|warn|fail) \t detail
+: >"$LOCAL_LIST"
+: >"$UPLOAD_RESULTS"
+
+# ---------------------------------------------------------------------------
+# 1) + 2) Projít intake složku rekurzivně, jen .jpg/.jpeg (bez ohledu na
+# velikost písmen), spočítat otisk. .DS_Store a cokoliv jiného se nefiltruje
+# ručně — prostě neprojde příponovým filtrem.
+while IFS= read -r -d '' file; do
+	rel_path="${file#"$INTAKE"/}"
+	key="$(path_to_key "$rel_path")" || key=""
+	if [[ -z "$key" ]]; then
+		echo "${C_WARN}!${C_RESET} přeskočeno, cestu nejde bezpečně převést na klíč: $rel_path" >&2
+		continue
+	fi
+	hash="sha256:$(shasum -a 256 "$file" | awk '{print $1}')"
+	printf '%s\t%s\t%s\n' "$rel_path" "$key" "$hash" >>"$LOCAL_LIST"
+done < <(find "$INTAKE" -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) -print0)
+
+NALEZENO=$(wc -l <"$LOCAL_LIST" | tr -d ' ')
+
+# ---------------------------------------------------------------------------
+# 3) Zeptat se serveru, co už má.
+files_resp=$(curl -sS -o "$WORKDIR/files_body.json" -w '%{http_code}' \
+	-H "Authorization: Bearer $TOKEN" \
+	"$SERVER/admin/files")
+files_status="$files_resp"
+if [[ "$files_status" != "200" ]]; then
+	echo "${C_ERR}Nepodařilo se zjistit stav na serveru${C_RESET} ($SERVER/admin/files, HTTP $files_status)." >&2
+	body=$(cat "$WORKDIR/files_body.json" 2>/dev/null)
+	msg=$(json_string "$body" "message")
+	[[ -n "$msg" ]] && echo "  $msg" >&2
+	exit 1
+fi
+files_body=$(cat "$WORKDIR/files_body.json")
+printf '%s' "$files_body" \
+	| grep -oE '"[a-z0-9]+(-{1,2}[a-z0-9]+)*":"sha256:[0-9a-f]{64}"' \
+	| LC_ALL=C sed -E 's/^"([^"]+)":"([^"]+)"$/\1\t\2/' >"$SERVER_MAP"
+SERVER_MA=$(wc -l <"$SERVER_MAP" | tr -d ' ')
+
+# ---------------------------------------------------------------------------
+# Spočítat rozdíl: nový klíč, nebo stejný klíč s jiným otiskem (přebarvená
+# fotka publikovaná znovu pod stejnou cestou).
+: >"$TO_UPLOAD"
+while IFS=$'\t' read -r rel_path key hash; do
+	server_hash=$(awk -F'\t' -v k="$key" '$1==k{print $2; exit}' "$SERVER_MAP")
+	if [[ -z "$server_hash" || "$server_hash" != "$hash" ]]; then
+		printf '%s\t%s\n' "$rel_path" "$key" >>"$TO_UPLOAD"
+	fi
+done <"$LOCAL_LIST"
+K_ODESLANI=$(wc -l <"$TO_UPLOAD" | tr -d ' ')
+
+echo
+echo "${C_MUTE}Intake:${C_RESET}  $INTAKE"
+echo "${C_MUTE}Server:${C_RESET}  $SERVER"
+echo "${C_MUTE}Nalezeno:${C_RESET} $NALEZENO fotek · ${C_MUTE}server má $SERVER_MA${C_RESET} · ${C_BOLD}k odeslání $K_ODESLANI${C_RESET}"
+echo
+
+# ---------------------------------------------------------------------------
+# 4) Poslat rozdíl, po jedné. Fotka, která selže, běh nezastaví.
+MEL_CHYBU_TENTO_BEH=0
+if [[ "$K_ODESLANI" -gt 0 ]]; then
+	while IFS=$'\t' read -r rel_path key; do
+		file_path="$INTAKE/$rel_path"
+		encoded_path=$(urlencode "$rel_path")
+		upload_resp=$(curl -sS -o "$WORKDIR/upload_body.json" -w '%{http_code} %{time_total}' \
+			-X POST \
+			-H "Authorization: Bearer $TOKEN" \
+			-H "Content-Type: application/octet-stream" \
+			--data-binary @"$file_path" \
+			"$SERVER/admin/upload?path=$encoded_path")
+		curl_exit=$?
+		http_code="${upload_resp%% *}"
+		time_total="${upload_resp#* }"
+
+		if [[ $curl_exit -ne 0 ]]; then
+			printf '  %s %-42s %s\n' "${C_ERR}✗${C_RESET}" "$key" "${C_ERR}chyba sítě (curl selhal)${C_RESET}"
+			printf '%s\tfail\t%s\n' "$key" "chyba sítě" >>"$UPLOAD_RESULTS"
+			MEL_CHYBU_TENTO_BEH=1
+			continue
+		fi
+
+		body=$(cat "$WORKDIR/upload_body.json" 2>/dev/null)
+		if [[ "$http_code" != "200" ]]; then
+			reason=$(json_string "$body" "message")
+			[[ -z "$reason" ]] && reason=$(json_string "$body" "error")
+			[[ -z "$reason" ]] && reason="HTTP $http_code"
+			printf '  %s %-42s %s\n' "${C_ERR}✗${C_RESET}" "$key" "${C_ERR}${reason}${C_RESET}"
+			printf '%s\tfail\t%s\n' "$key" "$reason" >>"$UPLOAD_RESULTS"
+			MEL_CHYBU_TENTO_BEH=1
+			continue
+		fi
+
+		zpracovano=$(json_bool "$body" "zpracovano")
+		if [[ "$zpracovano" == "true" ]]; then
+			time_fmt=$(printf '%.1fs' "$time_total" 2>/dev/null || echo "${time_total}s")
+			printf '  %s %-42s %s\n' "${C_OK}✓${C_RESET}" "$key" "${C_MUTE}${time_fmt}${C_RESET}"
+			printf '%s\tok\t\n' "$key" >>"$UPLOAD_RESULTS"
+		else
+			chyba=$(json_string "$body" "chyba")
+			[[ -z "$chyba" ]] && chyba="zpracování selhalo"
+			printf '  %s %-42s %s\n' "${C_ERR}✗${C_RESET}" "$key" "${C_ERR}${chyba}${C_RESET}"
+			printf '%s\tfail\t%s\n' "$key" "$chyba" >>"$UPLOAD_RESULTS"
+			MEL_CHYBU_TENTO_BEH=1
+		fi
+	done <"$TO_UPLOAD"
+fi
+
+# ---------------------------------------------------------------------------
+# 5) Rebuild — jednou na konci, jen když bylo co poslat.
+if [[ "$K_ODESLANI" -gt 0 ]]; then
+	rebuild_start=$(date +%s)
+	rebuild_resp=$(curl -sS -o "$WORKDIR/rebuild_body.json" -w '%{http_code}' \
+		-X POST -H "Authorization: Bearer $TOKEN" "$SERVER/admin/rebuild")
+	rebuild_status="$rebuild_resp"
+	rebuild_end=$(date +%s)
+	rebuild_ms=$(((rebuild_end - rebuild_start) * 1000))
+	rebuild_body=$(cat "$WORKDIR/rebuild_body.json" 2>/dev/null)
+	if [[ "$rebuild_status" == "200" ]]; then
+		echo "${C_MUTE}Přeskládávám index…${C_RESET} ${C_OK}hotovo${C_RESET} ${C_MUTE}(${rebuild_ms} ms)${C_RESET}"
+	else
+		reason=$(json_string "$rebuild_body" "message")
+		[[ -z "$reason" ]] && reason="HTTP $rebuild_status"
+		echo "${C_MUTE}Přeskládávám index…${C_RESET} ${C_ERR}selhalo${C_RESET} ${C_ERR}(${reason})${C_RESET}"
+		MEL_CHYBU_TENTO_BEH=1
+	fi
+	echo
+fi
+
+# ---------------------------------------------------------------------------
+# 6) Souhrn — vždy, i když nebylo co dělat.
+report_resp=$(curl -sS -o "$WORKDIR/report_body.json" -w '%{http_code}' \
+	-H "Authorization: Bearer $TOKEN" "$SERVER/admin/report")
+report_status="$report_resp"
+
+if [[ "$report_status" != "200" ]]; then
+	echo "${C_ERR}Nepodařilo se načíst souhrn ze serveru${C_RESET} ($SERVER/admin/report, HTTP $report_status)." >&2
+	exit 1
+fi
+report_body=$(cat "$WORKDIR/report_body.json")
+
+ULOZENO=$(json_number "$report_body" "ulozeno")
+V_INDEXU=$(json_number "$report_body" "vIndexu")
+SELHALO=$(json_number "$report_body" "selhalo")
+BEZ_KLIC_SLOV=$(json_number "$report_body" "bezKlicovychSlov")
+: "${ULOZENO:=0}" "${V_INDEXU:=0}" "${SELHALO:=0}" "${BEZ_KLIC_SLOV:=0}"
+
+LINE="─────────────────────────────────────────────────"
+echo "${C_BOLD}${LINE}${C_RESET}"
+selhalo_color="$C_OK"
+[[ "$SELHALO" -gt 0 ]] && selhalo_color="$C_ERR"
+bez_klic_color="$C_MUTE"
+[[ "$BEZ_KLIC_SLOV" -gt 0 ]] && bez_klic_color="$C_WARN"
+printf '%suloženo %s%s │ %sv indexu %s%s │ %sselhalo %s%s │ %sbez klíč. slov %s%s\n' \
+	"$C_BOLD" "$ULOZENO" "$C_RESET" \
+	"$C_BOLD" "$V_INDEXU" "$C_RESET" \
+	"$selhalo_color" "$SELHALO" "$C_RESET" \
+	"$bez_klic_color" "$BEZ_KLIC_SLOV" "$C_RESET"
+echo "${C_BOLD}${LINE}${C_RESET}"
+echo
+
+# Podezřelá klíčová slova: počet 1, bez prefixu "MH-" (to jsou funkční
+# klíčová slova pro rozcestník galerií, ne překlepy).
+suspicious=$(printf '%s' "$report_body" \
+	| grep -oE '"klicoveSlovo":"[^"]*","pocet":1[,}]' \
+	| LC_ALL=C sed -E 's/^"klicoveSlovo":"//; s/","pocet":1[,}]$//' \
+	| grep -v '^MH-')
+if [[ -n "$suspicious" ]]; then
+	count=$(printf '%s\n' "$suspicious" | grep -c .)
+	echo "${C_WARN}Podezřelá klíčová slova${C_RESET} ${C_MUTE}(počet 1 — možný překlep, celkem $count):${C_RESET}"
+	while IFS= read -r kw; do
+		[[ -z "$kw" ]] && continue
+		printf '  %s%s%s\n' "$C_WARN" "$kw" "$C_RESET"
+	done <<<"$suspicious"
+	echo
+fi
+
+# ---------------------------------------------------------------------------
+# Závěr. Nenulový návratový kód, kdykoliv něco selhalo — ať už v tomhle
+# běhu (upload/rebuild), nebo dřív a server o tom pořád ví (selhalo > 0).
+if [[ "$MEL_CHYBU_TENTO_BEH" -eq 0 && "$SELHALO" -eq 0 ]]; then
+	echo "${C_OK}Vše v pořádku.${C_RESET}"
+	exit 0
+else
+	echo "${C_ERR}Skončeno s chybami.${C_RESET} Podrobnosti: ${SERVER}/admin"
+	exit 1
+fi
