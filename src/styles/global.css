@@ -371,13 +371,10 @@ main.bez-hero {
 	font-style: italic;
 	text-align: center;
 	letter-spacing: normal;
-	/* Spodní margin musí být 0 — na WP ho caption nemá (změřeno 30. 8. 2026:
-	   figcaption margin-bottom 0px). Dřív tu bylo --mezera-6 (48px), což
-	   přidávalo NEVIDITELNÝCH 48px pod každý sloupec s fotkou. Sloupec byl
-	   proto vyšší, než jak vypadá, a mezera za sekcí, kde je fotka delší než
-	   text (sekce 1), vycházela opticky o 48px větší než u ostatních —
-	   hlavní příčina toho, proč mezery mezi sekcemi nešly srovnat. */
-	margin: var(--mezera-1) 0 0;
+	/* Mobilní hodnoty (sloupec pod sebou: foto → caption → text) — odstup
+	   dole odděluje caption od textu. Na desktopu se přepisují na hodnoty
+	   z WP, viz blok About níž. */
+	margin: var(--mezera-1) 0 var(--mezera-6);
 }
 
 /* ---------- patička ---------- */
@@ -417,9 +414,12 @@ main.bez-hero {
    hlavní sadě (viz úkol 2, krok 2.1, pro precedens „hodnoty bez tokenu"). */
 
 :root {
-	/* Mezera mezi fotkou a textem v zig-zag sekci — 40px, měřeno ve wireframu
-	   About.dc.html. Zapadá do rytmu 8px (5×8), ale v původní škále chybí. */
-	--mezera-about-gap: 40px;
+	/* Mezera mezi fotkou a textem v zig-zag sekci — 30px, přímá shoda s WP
+	   (změřeno 30. 8. 2026 puppeteerem na živém webu: row gap 30px, všechny
+	   tři sekce). Dřív 40px podle wireframu About.dc.html — wireframe se tady
+	   od vzoru lišil a užší textový sloupec (903px místo 913px) navíc měnil
+	   zalomení odstavců, takže se text lámal na 9 řádků místo 8 jako na WP. */
+	--mezera-about-gap: 30px;
 
 	/* Velikost skrytého/mobilního nadpisu sekce („Fotograf", „Jachtař") —
 	   měřeno ve wireframu About-Mobile.dc.html. Desktopová velikost se
@@ -539,17 +539,40 @@ main.bez-hero {
 	   v zig-zag layoutu je sám o sobě úzký (749–903px), druhý strop navrch
 	   odřezával odstavec na 670px bez ohledu na to, kolik místa sloupec má.
 	   Změřeno na WP 30. 8. 2026: tam žádný podobný strop není, odstavec
-	   vyplňuje sloupec přesně. Zrušeno jen tady, jinde na webu platí dál. */
+	   vyplňuje sloupec přesně. Zrušeno jen tady, jinde na webu platí dál.
+
+	   Odstup mezi odstavci 9.6px — přímá shoda s WP (změřeno puppeteerem:
+	   p margin-bottom 9.6px, což je Elementorových 0.6em při 16px). Sitewide
+	   máme 24px, což je na About špatně: textový sloupec tím narostl o desítky
+	   pixelů, sekce 2 a 3 (kde je text vyšší než foto) se natáhly a mezery
+	   mezi sekcemi vycházely nestejně. Nezaokrouhlovat na 8px rytmus —
+	   hodnota rozhoduje o výšce sloupce, a ta musí sedět se vzorem. */
 	.about-sekce-text p {
 		max-width: none;
+		margin-bottom: 9.6px;
 	}
+
+	/* Caption na desktopu přesně jako WP (změřeno puppeteerem): žádné marginy
+	   a řádkování 22.4px (ne našich 24px). Ovlivňuje výšku sloupce s fotkou,
+	   takže to není kosmetika — u sekce 1 určuje výšku celé sekce. */
+	.popisek {
+		margin: 0;
+		line-height: 22.4px;
+	}
+
 }
 
 /* „Kvalifikace:" zůstává obyčejný odstavec (ne nadpis) — jinak by se
-   na desktopu skryl spolu s .about-nadpis-sekce. Jen vizuální odstup shora. */
-.about-kvalifikace {
-	margin-top: var(--mezera-3);
-}
+   na desktopu skryl spolu s .about-nadpis-sekce.
+
+   Žádný zvláštní odstup shora: na WP je to úplně obyčejný odstavec se
+   stejným rozestupem jako ostatní (změřeno puppeteerem — předchozí odstavec
+   končí 1829, „Kvalifikace:" začíná 1838, tedy standardních 9.6px). Dřív tu
+   bylo margin-top: var(--mezera-3), což kvůli slučování marginů natáhlo
+   sekci 3 o 14.4px a rozhodilo její výšku proti vzoru.
+
+   Třída v HTML zůstává — je to sémantická značka pro tenhle odstavec, může
+   se hodit později. */
 
 /* ---------- vizuálně skrytý nadpis — fáze 5 ---------- */
 /* Stránka galerie (a další bez vlastního viditelného nadpisu) potřebuje h1
