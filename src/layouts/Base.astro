@@ -61,20 +61,26 @@ const jeAktivni = (href: string) => cesta === href;
 			<a href="/cookies/">Cookies</a>
 			<span class="paticka-oddelovac">|</span>
 			<a href="/impressum/">Impressum</a>
-			<span class="odkaz-vzhled paticka-facebook" aria-label="Facebook">
+			<a
+				class="paticka-facebook"
+				href="https://www.facebook.com/MHSailingPhotographer/"
+				target="_blank"
+				rel="noreferrer"
+				aria-label="Facebook"
+			>
 				<svg
 					width="20"
 					height="20"
 					viewBox="0 0 24 24"
 					fill="none"
-					stroke="currentColor"
+					stroke="var(--barva-facebook)"
 					stroke-width="1.5"
 					stroke-linecap="round"
 					stroke-linejoin="round"
 				>
 					<path d="M15 8.5h-2a1 1 0 0 0-1 1V11h3l-.4 3H12v7h-3v-7H7v-3h2V9a4 4 0 0 1 4-4h2z"></path>
 				</svg>
-			</span>
+			</a>
 		</footer>
 
 		<script>
