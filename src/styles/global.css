@@ -371,7 +371,13 @@ main.bez-hero {
 	font-style: italic;
 	text-align: center;
 	letter-spacing: normal;
-	margin: var(--mezera-1) 0 var(--mezera-6);
+	/* Spodní margin musí být 0 — na WP ho caption nemá (změřeno 30. 8. 2026:
+	   figcaption margin-bottom 0px). Dřív tu bylo --mezera-6 (48px), což
+	   přidávalo NEVIDITELNÝCH 48px pod každý sloupec s fotkou. Sloupec byl
+	   proto vyšší, než jak vypadá, a mezera za sekcí, kde je fotka delší než
+	   text (sekce 1), vycházela opticky o 48px větší než u ostatních —
+	   hlavní příčina toho, proč mezery mezi sekcemi nešly srovnat. */
+	margin: var(--mezera-1) 0 0;
 }
 
 /* ---------- patička ---------- */
@@ -470,16 +476,17 @@ main.bez-hero {
 		padding: 0;
 	}
 
-	/* Mezera mezi bloky — jednotná 24px pro všechny přechody, žádná výjimka
-	   pro poslední blok. UX konstrukce (Michal, 30. 8. 2026 večer): sekce
-	   mají vždy stejnou pevnou mezeru a obsah (foto i text) začíná vždy
-	   hned na začátku sekce — to je řešeno níž u .about-sekce-text--uvod,
-	   ne kompromisem na týhle hodnotě. Dřív tu byl kompromis 48px/24px
-	   podle :last-child kvůli nevyrovnanému textovému sloupci bloku 1→2
-	   (viz historie v gitu) — nahrazeno přesným dořešením u zdroje
-	   nerovnosti (viz níže), takže teď stačí jedna hodnota pro všechny. */
+	/* Mezera mezi sekcemi — 20px, přesná hodnota z WP (změřeno 30. 8. 2026
+	   na `.e-parent`, všechny tři sekce shodně). Jedna hodnota pro všechny
+	   přechody, žádné výjimky. UX konstrukce (Michal): mezi sekcemi je vždy
+	   stejná pevná mezera a na začátku sekce je vždy obsah.
+
+	   Aby tahle jedna hodnota fungovala, musí platit obojí: řádek se
+	   zarovnává na `center` (viz níže) a caption nesmí mít spodní margin
+	   (viz .popisek výš) — jinak sloupec s fotkou nese neviditelné místo
+	   navíc a mezera za sekcí 1 vypadá větší než ostatní. */
 	.about-sekce {
-		margin-top: 24px;
+		margin-top: 20px;
 	}
 
 	/* Svislé zarovnání foto vs. text — CENTER, přesně jako WP. Naměřeno
