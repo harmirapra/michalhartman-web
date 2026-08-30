@@ -466,18 +466,34 @@ main.bez-hero {
 		padding: 0;
 	}
 
-	/* WP: mezera mezi bloky obrázek+text je jen 55px, ne sitewide 64px
-	   (naměřeno 30. 8. 2026). Musí být AŽ TADY, ne u main{} výš — jinak by
-	   ji přebilo pozdější .about-sekce{margin-top:var(--mezera-8)} beze
-	   media query se stejnou specificitou. */
+	/* Mezera mezi bloky — 2 řádky textu (2 × 24px řádkování = 48px), přesně
+	   token --mezera-6. Michal 30. 8. 2026: „Zmenši podle vzoru WP nebo si
+	   hodnotu dopočítej na výšku 2 řádků našeho textu. To bude akorát."
+	   Musí být AŽ TADY, ne u main{} výš — jinak by ji přebilo pozdější
+	   .about-sekce{margin-top:var(--mezera-8)} beze media query se stejnou
+	   specificitou. */
 	.about-sekce {
-		margin-top: 55px;
+		margin-top: var(--mezera-6);
 	}
 
 	.about-sekce-radek {
 		flex-direction: row;
-		align-items: flex-start; /* WP: text i foto začínají na horní hraně řádku (ověřeno 30. 8. 2026) */
+		align-items: flex-start;
 		gap: var(--mezera-about-gap);
+	}
+
+	/* Svislý posun textu proti hornímu okraji fotky — INDIVIDUÁLNÍ podle
+	   WYSIWYG designu WP (Michal 30. 8. 2026, po revizi předchozího pokusu
+	   napodobit mechanismus WP obecně): blok 1 a 3 o řádek níž, blok 2
+	   (delší text, 6 odstavců) o tři řádky níž. Násobky --text-radkovani
+	   (1.5) × --text-velikost (16px) = 24px na řádek. */
+	.about-sekce-text--uvod,
+	.about-sekce-text--jachtar {
+		margin-top: 24px; /* 1 řádek */
+	}
+
+	.about-sekce-text--fotograf {
+		margin-top: 72px; /* 3 řádky */
 	}
 
 	.about-sekce-reverse .about-sekce-radek {
