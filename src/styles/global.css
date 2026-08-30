@@ -490,20 +490,23 @@ main.bez-hero {
 
 	/* Svislý posun mezi fotkou a textem — INDIVIDUÁLNÍ podle WYSIWYG designu
 	   WP (Michal 30. 8. 2026, opraveno téhož dne — směr posunu byl u bloku
-	   2 a 3 obráceně). Blok 1: text níž než foto. Blok 2 a 3: FOTO níž než
-	   text (opačný směr než blok 1) — blok 2 o tři řádky (delší text,
-	   6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
+	   2 a 3 obráceně). Blok 1: text o řádek níž než foto. Blok 2 a 3: FOTO
+	   níž než text (opačný směr než blok 1) — blok 2 o tři řádky (delší
+	   text, 6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
 	   --text-velikost (16px) = 24px na řádek.
 
-	   Blok 1 má krátký text (3 odstavce) vedle vysoké portrétní fotky —
-	   textový sloupec proto přirozeně končí o 62px výš než fotka. Aby
-	   mezera 1→2 na textovém sloupci vyšla stejná jako schválená mezera
-	   2→3 (24px), musí text dotáhnout až na úroveň paty fotky — proto
-	   4 řádky (96px), ne původní 1. Přepočteno a ověřeno živě 30. 8. 2026
-	   večer: gap 1→2 na textu = gap 2→3 = 24px přesně, blok 2→3 beze
-	   změny (foto 153px, text 24px). */
+	   POKUS (30. 8. večer) zvětšit tuhle hodnotu na 96px kvůli přesné shodě
+	   mezery 1→2 s 2→3 byl vrácen — posunul i ZAČÁTEK textu (ne jen konec)
+	   ze schválené „1 řádek pod horní hranou fotky" na „4-5 řádků", což
+	   rozbilo tenhle validovaný vztah. Content bloku 1 (krátký text,
+	   3 odstavce, vedle vysoké portrétní fotky) má foto o 62px vyšší než
+	   text — žádná hodnota tohoto marginu nemůže zároveň (a) nechat text
+	   začínat 1 řádek pod fotkou, i (b) dotáhnout jeho konec až k patě
+	   fotky. Mezera 1→2 na textovém sloupci proto zůstává o něco větší
+	   než schválených 24px u 2→3 (viz .about-sekce výše) — to je hranice
+	   daná obsahem, ne řešitelná jedním číslem tady. */
 	.about-sekce-text--uvod {
-		margin-top: 96px; /* 4 řádky */
+		margin-top: 24px; /* 1 řádek */
 	}
 
 	.about-sekce-reverse .about-sekce-radek {
