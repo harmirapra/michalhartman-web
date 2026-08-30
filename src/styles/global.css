@@ -4,7 +4,7 @@
 :root {
 	/* Barvy — DESIGN.md, sekce 3 */
 	--barva-pozadi: #000000;
-	--barva-textu: #ffffff;
+	--barva-textu: #e6e6e6;
 	--barva-zvyrazneni: #c02323;
 	--barva-akcent-tlumeny: #af4b2f;
 	--barva-text-tlumeny: #e6e6e6;
@@ -29,18 +29,15 @@
 
 	/* Layout — DESIGN.md, sekce 5 */
 	--sirka-obsahu: 900px;
+	--sirka-obsahu-about: 1140px; /* shoda s WP, jen stránka O mně — viz DESIGN.md sekce 11 */
 	--hero-vyska: 65vh;
 
-	/* Velikosti fotek na stránce O mně — INDIVIDUÁLNÍ pro každou sekci,
-	   ne sdílený vzor pro budoucí stránky (viz DESIGN.md sekce 11).
-	   Přepočteno z živého WP 30. 8. 2026: naměřená šířka fotky v obsahovém
-	   sloupci WP (1140px) × poměr obsahových sloupců New/WP (900/1140 ≈
-	   0,789). WP totiž pro každou sekci použil jinou šířku — menší fotka
-	   ke kratšímu textu, větší k delšímu — a tenhle vztah se přebírá,
-	   jen přepočítaný na užší sloupec New. */
-	--sirka-foto-uvod: 156px; /* WP 197px × 0,789 */
-	--sirka-foto-fotograf: 277px; /* WP 351px × 0,789 */
-	--sirka-foto-jachtar: 211px; /* WP 267px × 0,789 */
+	/* Velikosti fotek na stránce O mně — přímá shoda s WP (naměřeno na
+	   živém webu 30. 8. 2026), bez přepočtu. Individuální pro každou
+	   sekci, ne vzor pro budoucí stránky — viz DESIGN.md sekce 11. */
+	--sirka-foto-uvod: 197px;
+	--sirka-foto-fotograf: 351px;
+	--sirka-foto-jachtar: 267px;
 
 	/* Naměřená výška hlavičky (padding nahoře i dole + obsah), ne vypočtená.
 	   Hlavička je position: absolute (viz sekce „hlavička" níže), takže
@@ -113,13 +110,8 @@ body {
 	font-size: var(--text-velikost);
 	line-height: var(--text-radkovani);
 	letter-spacing: var(--text-prostrkani);
+	-webkit-font-smoothing: antialiased; /* shoda s WP, vráceno 30. 8. 2026 */
 }
-
-/* Záměrně tu NENÍ `-webkit-font-smoothing: antialiased`.
-   Vypíná subpixelové vyhlazování a u světlého textu na černém pozadí
-   v tenkém řezu 200 dělá písmo tenčí a hrany roztřepené — na retina
-   displeji viditelně. Ověřeno srovnáním 28. 8. 2026, viz worklog.
-   Nepřidávat zpět bez vizuální kontroly na macOS. */
 
 img {
 	max-width: 100%;
@@ -134,7 +126,7 @@ h2 {
 	font-weight: var(--nadpis-rez);
 	font-size: var(--nadpis-velikost);
 	line-height: var(--nadpis-radkovani);
-	letter-spacing: 0;
+	letter-spacing: -0.5px; /* shoda s WP, měřeno 30. 8. 2026 */
 	margin: 0 0 var(--mezera-3);
 }
 
@@ -174,6 +166,11 @@ a:focus-visible {
 	max-width: var(--sirka-obsahu);
 	margin: 0 auto;
 	padding: 0 var(--mezera-3);
+}
+
+/* Jen stránka O mně — širší sloupec, shoda s WP (viz DESIGN.md sekce 11). */
+.obsah--about {
+	max-width: var(--sirka-obsahu-about);
 }
 
 main {
