@@ -343,8 +343,17 @@ main.bez-hero {
 
 /* ---------- popisek fotografie ---------- */
 
+/* Caption fotky — pevné rozhodnutí, přímá shoda s WP (měřeno 30. 8. 2026):
+   kurzíva, řez 400, na střed. Barva je stejný token jako nadpis v hero
+   (--barva-hero-nadpis) — na WP mají captiony a hero nadpis identickou
+   barvu i průhlednost, není to náhoda. Font zůstává Poppins (ne systémové
+   písmo prohlížeče jako na WP) — na WP nemá figcaption vlastní styl a
+   spadá do výchozího motivu, není to záměr, jen díra v Elementoru. */
 .popisek {
-	color: var(--barva-text-tlumeny);
+	color: var(--barva-hero-nadpis);
+	font-weight: 400;
+	font-style: italic;
+	text-align: center;
 	margin: var(--mezera-1) 0 var(--mezera-6);
 }
 
@@ -436,6 +445,14 @@ main.bez-hero {
 }
 
 @media (min-width: 768px) {
+	/* Řádek obrázek+text má na WP nulový vnitřní odstup (změřeno 30. 8. 2026:
+	   1140px řádek, 0px padding) — .obsah--about má ale zděděný padding
+	   24px na stranu z .obsah, takže by řádek byl o 48px užší než WP.
+	   Zrušeno jen tady, jen na desktopu (mobilní odstup zůstává). */
+	.obsah--about {
+		padding: 0;
+	}
+
 	.about-sekce-radek {
 		flex-direction: row;
 		align-items: center;
