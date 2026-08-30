@@ -480,35 +480,19 @@ main.bez-hero {
 		margin-top: var(--mezera-6);
 	}
 
-	/* Poslední blok (Jachtař) má vlastní foto posunuté o 24px níž
-	   (.about-sekce-foto--jachtar). To roztahuje mezeru na sloupci fotek
-	   a zároveň zužuje mezeru na sloupci textu — jedna hodnota margin-top
-	   nemůže vyrovnat oba sloupce zároveň (foto by chtělo -9px, text
-	   +110px, matematicky neslučitelné). margin-top:0 (první pokus,
-	   30. 8. 2026) srazilo text na doslova 0px — poslední odstavec bloku 2
-	   a první odstavec bloku 3 se dotýkaly. Kompromis: 24px, žádný sloupec
-	   nesjede na nulu (foto 153px proti 120px u 1→2, text 24px proti
-	   110px) — to je to, čemu oko rozumí jako "mezera", ne "sražené
-	   odstavce". Řešeno přes :last-child — v sekci jsou přesně tři bloky,
-	   poslední je vždy Jachtař. */
-	.about-sekce:last-child {
-		margin-top: 24px;
-	}
-
+	/* Mezera mezi bloky je stejná pro všechny přechody (1→2 i 2→3) — jedna
+	   hodnota, žádná výjimka pro poslední blok. Předchozí verze zkoušela
+	   pixel-přesně replikovat i drobný svislý posun foto/text uvnitř řádku
+	   podle WP (viz historie v gitu), ale dvě nezávislé metriky (foto sloupec,
+	   text sloupec) nejdou vyrovnat jedním marginem zároveň — bloky mají
+	   různě dlouhý text, takže sloupce různě vysoké. Michal 30. 8. 2026:
+	   z hlediska UX je požadavek triviální — stejná mezera mezi sekcemi,
+	   bez honby za dílčím posunem uvnitř řádku. Foto a text proto začínají
+	   v řádku zarovnané na stejné výšce (align-items: flex-start). */
 	.about-sekce-radek {
 		flex-direction: row;
 		align-items: flex-start;
 		gap: var(--mezera-about-gap);
-	}
-
-	/* Svislý posun mezi fotkou a textem — INDIVIDUÁLNÍ podle WYSIWYG designu
-	   WP (Michal 30. 8. 2026, opraveno téhož dne — směr posunu byl u bloku
-	   2 a 3 obráceně). Blok 1: text o řádek níž než foto. Blok 2 a 3: FOTO
-	   níž než text (opačný směr než blok 1) — blok 2 o tři řádky (delší
-	   text, 6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
-	   --text-velikost (16px) = 24px na řádek. */
-	.about-sekce-text--uvod {
-		margin-top: 24px; /* 1 řádek */
 	}
 
 	.about-sekce-reverse .about-sekce-radek {
@@ -521,12 +505,10 @@ main.bez-hero {
 
 	.about-sekce-foto--fotograf {
 		flex: 0 0 var(--sirka-foto-fotograf);
-		margin-top: 72px; /* 3 řádky, foto níž než text */
 	}
 
 	.about-sekce-foto--jachtar {
 		flex: 0 0 var(--sirka-foto-jachtar);
-		margin-top: 24px; /* 1 řádek, foto níž než text */
 	}
 
 	.about-sekce-text {
