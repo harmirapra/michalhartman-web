@@ -470,28 +470,15 @@ main.bez-hero {
 		padding: 0;
 	}
 
-	/* Mezera mezi bloky — 2 řádky textu (2 × 24px řádkování = 48px), přesně
-	   token --mezera-6. Michal 30. 8. 2026: „Zmenši podle vzoru WP nebo si
-	   hodnotu dopočítej na výšku 2 řádků našeho textu. To bude akorát."
-	   Musí být AŽ TADY, ne u main{} výš — jinak by ji přebilo pozdější
-	   .about-sekce{margin-top:var(--mezera-8)} beze media query se stejnou
-	   specificitou. */
+	/* Mezera mezi bloky — jednotná 24px pro všechny přechody, žádná výjimka
+	   pro poslední blok. UX konstrukce (Michal, 30. 8. 2026 večer): sekce
+	   mají vždy stejnou pevnou mezeru a obsah (foto i text) začíná vždy
+	   hned na začátku sekce — to je řešeno níž u .about-sekce-text--uvod,
+	   ne kompromisem na týhle hodnotě. Dřív tu byl kompromis 48px/24px
+	   podle :last-child kvůli nevyrovnanému textovému sloupci bloku 1→2
+	   (viz historie v gitu) — nahrazeno přesným dořešením u zdroje
+	   nerovnosti (viz níže), takže teď stačí jedna hodnota pro všechny. */
 	.about-sekce {
-		margin-top: var(--mezera-6);
-	}
-
-	/* Poslední blok (Jachtař) má vlastní foto posunuté o 24px níž
-	   (.about-sekce-foto--jachtar). To roztahuje mezeru na sloupci fotek
-	   a zároveň zužuje mezeru na sloupci textu — jedna hodnota margin-top
-	   nemůže vyrovnat oba sloupce zároveň (foto by chtělo -9px, text
-	   +110px, matematicky neslučitelné). margin-top:0 (první pokus,
-	   30. 8. 2026) srazilo text na doslova 0px — poslední odstavec bloku 2
-	   a první odstavec bloku 3 se dotýkaly. Kompromis: 24px, žádný sloupec
-	   nesjede na nulu (foto 153px proti 120px u 1→2, text 24px proti
-	   110px) — to je to, čemu oko rozumí jako "mezera", ne "sražené
-	   odstavce". Řešeno přes :last-child — v sekci jsou přesně tři bloky,
-	   poslední je vždy Jachtař. */
-	.about-sekce:last-child {
 		margin-top: 24px;
 	}
 
@@ -503,12 +490,20 @@ main.bez-hero {
 
 	/* Svislý posun mezi fotkou a textem — INDIVIDUÁLNÍ podle WYSIWYG designu
 	   WP (Michal 30. 8. 2026, opraveno téhož dne — směr posunu byl u bloku
-	   2 a 3 obráceně). Blok 1: text o řádek níž než foto. Blok 2 a 3: FOTO
-	   níž než text (opačný směr než blok 1) — blok 2 o tři řádky (delší
-	   text, 6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
-	   --text-velikost (16px) = 24px na řádek. */
+	   2 a 3 obráceně). Blok 1: text níž než foto. Blok 2 a 3: FOTO níž než
+	   text (opačný směr než blok 1) — blok 2 o tři řádky (delší text,
+	   6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
+	   --text-velikost (16px) = 24px na řádek.
+
+	   Blok 1 má krátký text (3 odstavce) vedle vysoké portrétní fotky —
+	   textový sloupec proto přirozeně končí o 62px výš než fotka. Aby
+	   mezera 1→2 na textovém sloupci vyšla stejná jako schválená mezera
+	   2→3 (24px), musí text dotáhnout až na úroveň paty fotky — proto
+	   4 řádky (96px), ne původní 1. Přepočteno a ověřeno živě 30. 8. 2026
+	   večer: gap 1→2 na textu = gap 2→3 = 24px přesně, blok 2→3 beze
+	   změny (foto 153px, text 24px). */
 	.about-sekce-text--uvod {
-		margin-top: 24px; /* 1 řádek */
+		margin-top: 96px; /* 4 řádky */
 	}
 
 	.about-sekce-reverse .about-sekce-radek {
