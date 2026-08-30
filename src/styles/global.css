@@ -177,6 +177,15 @@ main {
 	padding: var(--mezera-8) 0 var(--mezera-12);
 }
 
+@media (min-width: 768px) {
+	/* WP: mezera mezi hero a prvním blokem je jen 20px, ne sitewide 64px
+	   (naměřeno 30. 8. 2026). Jen About, jen desktop — na mobilu a jinde
+	   na webu platí sitewide hodnota beze změny. */
+	.main--about {
+		padding-top: 20px;
+	}
+}
+
 /* Hlavička je position: absolute (netlačí obsah dolů), takže stránky bez
    hero fotky (ta hlavičce odsazení dává vizuálně, ne v toku dokumentu) by
    jinak měly nadpis nalepený hned pod hlavičkou. Přidávají si tenhle
@@ -457,9 +466,17 @@ main.bez-hero {
 		padding: 0;
 	}
 
+	/* WP: mezera mezi bloky obrázek+text je jen 55px, ne sitewide 64px
+	   (naměřeno 30. 8. 2026). Musí být AŽ TADY, ne u main{} výš — jinak by
+	   ji přebilo pozdější .about-sekce{margin-top:var(--mezera-8)} beze
+	   media query se stejnou specificitou. */
+	.about-sekce {
+		margin-top: 55px;
+	}
+
 	.about-sekce-radek {
 		flex-direction: row;
-		align-items: center;
+		align-items: flex-start; /* WP: text i foto začínají na horní hraně řádku (ověřeno 30. 8. 2026) */
 		gap: var(--mezera-about-gap);
 	}
 
