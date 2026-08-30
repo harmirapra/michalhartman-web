@@ -344,16 +344,20 @@ main.bez-hero {
 /* ---------- popisek fotografie ---------- */
 
 /* Caption fotky — pevné rozhodnutí, přímá shoda s WP (měřeno 30. 8. 2026):
-   kurzíva, řez 400, na střed. Barva je stejný token jako nadpis v hero
-   (--barva-hero-nadpis) — na WP mají captiony a hero nadpis identickou
-   barvu i průhlednost, není to náhoda. Font zůstává Poppins (ne systémové
-   písmo prohlížeče jako na WP) — na WP nemá figcaption vlastní styl a
-   spadá do výchozího motivu, není to záměr, jen díra v Elementoru. */
+   kurzíva, řez 400, na střed, bez prostrkání. Barva je stejný token jako
+   nadpis v hero (--barva-hero-nadpis) — na WP mají captiony a hero nadpis
+   identickou barvu i průhlednost, není to náhoda.
+   Font: systémové písmo prohlížeče, ne Poppins. Zkoušeno oboje — Poppins
+   kurzíva má širší znaky, stejný text se pak láme na 3 řádky místo 2 jako
+   na WP (ověřeno na captionu „Při focení s Alžbětkou…", 197px sloupec).
+   Font tady tedy není kosmetika, ale určuje zalomení textu. */
 .popisek {
+	font-family: -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 	color: var(--barva-hero-nadpis);
 	font-weight: 400;
 	font-style: italic;
 	text-align: center;
+	letter-spacing: normal;
 	margin: var(--mezera-1) 0 var(--mezera-6);
 }
 
@@ -477,6 +481,16 @@ main.bez-hero {
 
 	.about-sekce-text {
 		flex: 1;
+	}
+
+	/* Sitewide `p { max-width: 68ch }` (čitelnost dlouhého souvislého textu
+	   na Impressum/Cookies/Ochraně osobních údajů) je tady na škodu — sloupec
+	   v zig-zag layoutu je sám o sobě úzký (749–903px), druhý strop navrch
+	   odřezával odstavec na 670px bez ohledu na to, kolik místa sloupec má.
+	   Změřeno na WP 30. 8. 2026: tam žádný podobný strop není, odstavec
+	   vyplňuje sloupec přesně. Zrušeno jen tady, jinde na webu platí dál. */
+	.about-sekce-text p {
+		max-width: none;
 	}
 }
 
