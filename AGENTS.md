@@ -46,6 +46,11 @@ Nasazuje se na Railway ze složky `dist/`.
 - **Produkce:** merge pull requestu do `main` → automatické nasazení na `new.michalhartman.com`
 - **Náhled:** každý otevřený pull request dostane vlastní dočasnou URL
 - **Logy:** Railway dashboard → služba → Deployments (build log) a Logs (runtime log)
+- **Ověření, že nasazení konkrétního commitu doběhlo:** `railway deployment list --json`
+  vrací pole nasazení seřazené od nejnovějšího, každé se `status` a
+  `meta.commitHash`. Rychlejší a spolehlivější než čekat na GitHub commit
+  status API nebo opakovaně curlovat produkci — ten stav nemusí odpovídat
+  poslednímu mergnutému commitu, dokud `status` nepřejde na `SUCCESS`.
 - **Cesta zpět:** viz sekce níže
 
 ## Environment variables
