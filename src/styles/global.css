@@ -12,6 +12,10 @@
 	--barva-hero-overlay: rgba(0, 0, 0, 0.35);
 	--barva-oddelovac: #333333;
 	--barva-oddelovac-text: #666666;
+	/* Značková barva Facebooku, ne součást vlastní palety webu — proto
+	   samostatný token mimo škálu --barva-*. Michal 30. 8. 2026: ikona
+	   v patičce má být "nějaká modrá". */
+	--barva-facebook: #1877f2;
 
 	/* Typografie — DESIGN.md, sekce 4 */
 	--pismo: "Poppins", system-ui, -apple-system, sans-serif;
@@ -474,6 +478,19 @@ main.bez-hero {
 	   specificitou. */
 	.about-sekce {
 		margin-top: var(--mezera-6);
+	}
+
+	/* Poslední blok (Jachtař) má vlastní foto posunuté o 24px níž
+	   (.about-sekce-foto--jachtar). Relevantní je mezera mezi fotkami, ne
+	   mezi rámečky sekcí — to je to, co oko sleduje při scrollování
+	   fotografického webu. Před opravou byla mezera foto→foto 177px u
+	   bloku 2→3 proti 120px u 1→2 (Michal 30. 8. 2026: „zhruba
+	   dvojnásobná"). Sekce nemá svou vlastní mezeru navíc — odděluje ji
+	   jen posun fotky samotné, což dá 129px, blízko cíli 120px. Řešeno
+	   přes :last-child — v sekci jsou přesně tři bloky, poslední je vždy
+	   Jachtař. */
+	.about-sekce:last-child {
+		margin-top: 0;
 	}
 
 	.about-sekce-radek {
