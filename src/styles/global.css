@@ -481,16 +481,18 @@ main.bez-hero {
 	}
 
 	/* Poslední blok (Jachtař) má vlastní foto posunuté o 24px níž
-	   (.about-sekce-foto--jachtar). Relevantní je mezera mezi fotkami, ne
-	   mezi rámečky sekcí — to je to, co oko sleduje při scrollování
-	   fotografického webu. Před opravou byla mezera foto→foto 177px u
-	   bloku 2→3 proti 120px u 1→2 (Michal 30. 8. 2026: „zhruba
-	   dvojnásobná"). Sekce nemá svou vlastní mezeru navíc — odděluje ji
-	   jen posun fotky samotné, což dá 129px, blízko cíli 120px. Řešeno
-	   přes :last-child — v sekci jsou přesně tři bloky, poslední je vždy
-	   Jachtař. */
+	   (.about-sekce-foto--jachtar). To roztahuje mezeru na sloupci fotek
+	   a zároveň zužuje mezeru na sloupci textu — jedna hodnota margin-top
+	   nemůže vyrovnat oba sloupce zároveň (foto by chtělo -9px, text
+	   +110px, matematicky neslučitelné). margin-top:0 (první pokus,
+	   30. 8. 2026) srazilo text na doslova 0px — poslední odstavec bloku 2
+	   a první odstavec bloku 3 se dotýkaly. Kompromis: 24px, žádný sloupec
+	   nesjede na nulu (foto 153px proti 120px u 1→2, text 24px proti
+	   110px) — to je to, čemu oko rozumí jako "mezera", ne "sražené
+	   odstavce". Řešeno přes :last-child — v sekci jsou přesně tři bloky,
+	   poslední je vždy Jachtař. */
 	.about-sekce:last-child {
-		margin-top: 0;
+		margin-top: 24px;
 	}
 
 	.about-sekce-radek {
