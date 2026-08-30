@@ -241,27 +241,27 @@ nadpis („O mně" místo „Světlo, místa, okamžiky").
 | Fotograf (6 odstavců) | **vpravo** | **vlevo** |
 | Jachtař (3 odstavce + kvalifikace) | vlevo | vpravo |
 
-Obsahová šířka `900px`, mezera `40px`, text `16px/300/letter-spacing
-1.2px/#E6E6E6` (odpovídá tokenu odstavce z sekce 3–4), poměr stran fotek:
-portréty 4:5 (500×625), jachtařská fotka ~3:4 (1204×1600).
+Obsahová šířka `1140px` (`.obsah--about`, širší než sitewide `900px` —
+jen tahle stránka, shoda s WP), mezera `40px`, text
+`16px/300/letter-spacing 1.2px/#E6E6E6` (odpovídá tokenu odstavce z
+sekce 3–4), poměr stran fotek: portréty 4:5 (500×625), jachtařská fotka
+~3:4 (1204×1600).
 
 **Šířka sloupce fotky je individuální pro každou sekci, ne jedno číslo.**
 
-> **Opraveno 30. 8. 2026.** Původní záznam „sloupec fotky 380px" byl
-> nepřesný — skutečná šířka na živém WP se sekci od sekce liší (Michal
-> ladil každou fotku samostatně, WYSIWYG, bez jednotného tokenu). Přesné
-> měření na živém `/about/` 30. 8. 2026:
+> **Opraveno 30. 8. 2026, znovu 30. 8. 2026.** Nejdřív byla oprava
+> přepočtená poměrem na sitewide sloupec 900px. Michal ji zamítl —
+> jednorázová úloha, cíl je přímá vizuální shoda s WP, ne odvozený vzorec.
+> Řešení: sloupec pro About je širší (`1140px`, ne `900px`) a šířky fotek
+> jsou **přímo naměřené hodnoty z WP**, beze změny:
 >
-> | Sekce | WP šířka (sloupec 1140px) | New šířka (sloupec 900px, poměr ×0,789) |
-> |---|---|---|
-> | Úvod (3 odstavce) | 197px | `--sirka-foto-uvod`: **156px** |
-> | Fotograf (6 odstavců) | 351px | `--sirka-foto-fotograf`: **277px** |
-> | Jachtař (3 odstavce) | 267px | `--sirka-foto-jachtar`: **211px** |
+> | Sekce | `--sirka-foto-*` |
+> |---|---|
+> | Úvod (3 odstavce) | `uvod`: **197px** |
+> | Fotograf (6 odstavců) | `fotograf`: **351px** |
+> | Jachtař (3 odstavce) | `jachtar`: **267px** |
 >
-> Vzorec (menší fotka ke kratšímu textu, větší k delšímu) v datech
-> zřetelně je, i když ho Michal netvořil jako vědomé pravidlo. Rozhodnuto
-> **nezobecňovat** do sdíleného tokenu pro budoucí stránky — je to
-> individuální řešení jedné konkrétní stránky, ne vzor.
+> Individuální řešení jedné konkrétní stránky, ne vzor pro budoucí.
 
 **Nadpisy sekcí („Fotograf", „Jachtař") jsou schválně skryté na
 desktopu** (`elementor-hidden-desktop` na obalovém kontejneru, Elementor
