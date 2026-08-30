@@ -482,18 +482,14 @@ main.bez-hero {
 		gap: var(--mezera-about-gap);
 	}
 
-	/* Svislý posun textu proti hornímu okraji fotky — INDIVIDUÁLNÍ podle
-	   WYSIWYG designu WP (Michal 30. 8. 2026, po revizi předchozího pokusu
-	   napodobit mechanismus WP obecně): blok 1 a 3 o řádek níž, blok 2
-	   (delší text, 6 odstavců) o tři řádky níž. Násobky --text-radkovani
-	   (1.5) × --text-velikost (16px) = 24px na řádek. */
-	.about-sekce-text--uvod,
-	.about-sekce-text--jachtar {
+	/* Svislý posun mezi fotkou a textem — INDIVIDUÁLNÍ podle WYSIWYG designu
+	   WP (Michal 30. 8. 2026, opraveno téhož dne — směr posunu byl u bloku
+	   2 a 3 obráceně). Blok 1: text o řádek níž než foto. Blok 2 a 3: FOTO
+	   níž než text (opačný směr než blok 1) — blok 2 o tři řádky (delší
+	   text, 6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
+	   --text-velikost (16px) = 24px na řádek. */
+	.about-sekce-text--uvod {
 		margin-top: 24px; /* 1 řádek */
-	}
-
-	.about-sekce-text--fotograf {
-		margin-top: 72px; /* 3 řádky */
 	}
 
 	.about-sekce-reverse .about-sekce-radek {
@@ -506,10 +502,12 @@ main.bez-hero {
 
 	.about-sekce-foto--fotograf {
 		flex: 0 0 var(--sirka-foto-fotograf);
+		margin-top: 72px; /* 3 řádky, foto níž než text */
 	}
 
 	.about-sekce-foto--jachtar {
 		flex: 0 0 var(--sirka-foto-jachtar);
+		margin-top: 24px; /* 1 řádek, foto níž než text */
 	}
 
 	.about-sekce-text {
