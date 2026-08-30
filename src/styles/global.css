@@ -482,28 +482,29 @@ main.bez-hero {
 		margin-top: 24px;
 	}
 
+	/* Svislé zarovnání foto vs. text — CENTER, přesně jako WP. Naměřeno
+	   30. 8. 2026 večer přímo na živém WP (`.e-con-inner`, všechny tři
+	   sekce): `align-items: center`.
+
+	   POZOR na historii: PR #26 sem omylem zavedl `flex-start` na základě
+	   chybného měření WP („stretch" — nejspíš změřen vnější kontejner, ne
+	   skutečný flex řádek). Tím zmizelo automatické centrování a následné
+	   PR #27/#29 pak ručně zabetonovaly hodnoty 72px/24px/24px jako
+	   „individuální WYSIWYG posuny" — ve skutečnosti to byly jen dopočtené
+	   výsledky toho centrování. Protože pevné marginy posouvají obalový
+	   rámec sekce, přestaly mezery mezi sekcemi vycházet stejné, což vedlo
+	   k několika kolům marných oprav (PR #32 vrácen, #34 rozbil pozici
+	   v bloku 1).
+
+	   Centrování řeší obojí naráz a bez jediné ručně psané hodnoty: kratší
+	   sloupec se sám vycentruje proti delšímu a mezery mezi sekcemi jsou
+	   automaticky stejné, protože rámec sekce určuje vždy vyšší sloupec
+	   a žádný sloupec z něj nevyčnívá. Nepřidávej sem individuální
+	   margin-top — tím se přesně tenhle mechanismus zase rozbije. */
 	.about-sekce-radek {
 		flex-direction: row;
-		align-items: flex-start;
+		align-items: center;
 		gap: var(--mezera-about-gap);
-	}
-
-	/* Svislý posun mezi fotkou a textem — INDIVIDUÁLNÍ podle WYSIWYG designu
-	   WP (Michal 30. 8. 2026, opraveno téhož dne — směr posunu byl u bloku
-	   2 a 3 obráceně). Blok 1: text níž než foto. Blok 2 a 3: FOTO níž než
-	   text (opačný směr než blok 1) — blok 2 o tři řádky (delší text,
-	   6 odstavců), blok 3 o řádek. Násobky --text-radkovani (1.5) ×
-	   --text-velikost (16px) = 24px na řádek.
-
-	   Blok 1 má krátký text (3 odstavce) vedle vysoké portrétní fotky —
-	   textový sloupec proto přirozeně končí o 62px výš než fotka. Aby
-	   mezera 1→2 na textovém sloupci vyšla stejná jako schválená mezera
-	   2→3 (24px), musí text dotáhnout až na úroveň paty fotky — proto
-	   4 řádky (96px), ne původní 1. Přepočteno a ověřeno živě 30. 8. 2026
-	   večer: gap 1→2 na textu = gap 2→3 = 24px přesně, blok 2→3 beze
-	   změny (foto 153px, text 24px). */
-	.about-sekce-text--uvod {
-		margin-top: 96px; /* 4 řádky */
 	}
 
 	.about-sekce-reverse .about-sekce-radek {
@@ -516,12 +517,10 @@ main.bez-hero {
 
 	.about-sekce-foto--fotograf {
 		flex: 0 0 var(--sirka-foto-fotograf);
-		margin-top: 72px; /* 3 řádky, foto níž než text */
 	}
 
 	.about-sekce-foto--jachtar {
 		flex: 0 0 var(--sirka-foto-jachtar);
-		margin-top: 24px; /* 1 řádek, foto níž než text */
 	}
 
 	.about-sekce-text {
