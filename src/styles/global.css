@@ -30,7 +30,17 @@
 	/* Layout — DESIGN.md, sekce 5 */
 	--sirka-obsahu: 900px;
 	--hero-vyska: 65vh;
-	--sirka-fotky-about: 380px;
+
+	/* Velikosti fotek na stránce O mně — INDIVIDUÁLNÍ pro každou sekci,
+	   ne sdílený vzor pro budoucí stránky (viz DESIGN.md sekce 11).
+	   Přepočteno z živého WP 30. 8. 2026: naměřená šířka fotky v obsahovém
+	   sloupci WP (1140px) × poměr obsahových sloupců New/WP (900/1140 ≈
+	   0,789). WP totiž pro každou sekci použil jinou šířku — menší fotka
+	   ke kratšímu textu, větší k delšímu — a tenhle vztah se přebírá,
+	   jen přepočítaný na užší sloupec New. */
+	--sirka-foto-uvod: 156px; /* WP 197px × 0,789 */
+	--sirka-foto-fotograf: 277px; /* WP 351px × 0,789 */
+	--sirka-foto-jachtar: 211px; /* WP 267px × 0,789 */
 
 	/* Naměřená výška hlavičky (padding nahoře i dole + obsah), ne vypočtená.
 	   Hlavička je position: absolute (viz sekce „hlavička" níže), takže
@@ -439,8 +449,16 @@ main.bez-hero {
 		flex-direction: row-reverse;
 	}
 
-	.about-sekce-foto {
-		flex: 0 0 var(--sirka-fotky-about);
+	.about-sekce-foto--uvod {
+		flex: 0 0 var(--sirka-foto-uvod);
+	}
+
+	.about-sekce-foto--fotograf {
+		flex: 0 0 var(--sirka-foto-fotograf);
+	}
+
+	.about-sekce-foto--jachtar {
+		flex: 0 0 var(--sirka-foto-jachtar);
 	}
 
 	.about-sekce-text {

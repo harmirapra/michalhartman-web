@@ -241,10 +241,27 @@ nadpis („O mně" místo „Světlo, místa, okamžiky").
 | Fotograf (6 odstavců) | **vpravo** | **vlevo** |
 | Jachtař (3 odstavce + kvalifikace) | vlevo | vpravo |
 
-Obsahová šířka `900px`, sloupec fotky `380px`, mezera `40px`, text
-`16px/300/letter-spacing 1.2px/#E6E6E6` (odpovídá tokenu odstavce z
-sekce 3–4), poměr stran fotek: portréty 4:5 (500×625), jachtařská fotka
-~3:4 (1204×1600).
+Obsahová šířka `900px`, mezera `40px`, text `16px/300/letter-spacing
+1.2px/#E6E6E6` (odpovídá tokenu odstavce z sekce 3–4), poměr stran fotek:
+portréty 4:5 (500×625), jachtařská fotka ~3:4 (1204×1600).
+
+**Šířka sloupce fotky je individuální pro každou sekci, ne jedno číslo.**
+
+> **Opraveno 30. 8. 2026.** Původní záznam „sloupec fotky 380px" byl
+> nepřesný — skutečná šířka na živém WP se sekci od sekce liší (Michal
+> ladil každou fotku samostatně, WYSIWYG, bez jednotného tokenu). Přesné
+> měření na živém `/about/` 30. 8. 2026:
+>
+> | Sekce | WP šířka (sloupec 1140px) | New šířka (sloupec 900px, poměr ×0,789) |
+> |---|---|---|
+> | Úvod (3 odstavce) | 197px | `--sirka-foto-uvod`: **156px** |
+> | Fotograf (6 odstavců) | 351px | `--sirka-foto-fotograf`: **277px** |
+> | Jachtař (3 odstavce) | 267px | `--sirka-foto-jachtar`: **211px** |
+>
+> Vzorec (menší fotka ke kratšímu textu, větší k delšímu) v datech
+> zřetelně je, i když ho Michal netvořil jako vědomé pravidlo. Rozhodnuto
+> **nezobecňovat** do sdíleného tokenu pro budoucí stránky — je to
+> individuální řešení jedné konkrétní stránky, ne vzor.
 
 **Nadpisy sekcí („Fotograf", „Jachtař") jsou schválně skryté na
 desktopu** (`elementor-hidden-desktop` na obalovém kontejneru, Elementor
@@ -276,6 +293,24 @@ pro plné znění použité ve wireframu.
 **Živé CSS obsahuje drobné artefakty, které se záměrně nepřebírají:**
 `line-height:1.2px` u hero nadpisu (skoro jistě měl být bezjednotkový
 `1.2`) a nepoužitý `text-stroke-color:#000` bez nastavené šířky.
+
+**Pravidlo — minimální rozlišení zdrojového obrázku na statické stránce.**
+
+> Zapsáno 30. 8. 2026 na Michalův pokyn, jako obecný princip pro
+> jakoukoliv budoucí statickou stránku s obsahovým obrázkem (ne pro
+> galerii — ta má vlastní odvozené velikosti, viz
+> `2026-08-28-galerie-architektura.md`).
+
+Zdrojový soubor musí mít šířku **alespoň 2× zobrazenou CSS šířku**, aby
+byl ostrý na retina displeji (DPR 2). Menší zdroj nejde CSS dohnat —
+prohlížeč ho natáhne a obrázek zjemní.
+
+Kontrola u fotek na téhle stránce (po opravě šířek výše): portréty
+(500px zdroj) proti 156px a 277px zobrazené šířce mají rezervu; jachtařská
+fotka (1204px zdroj) proti 211px má rezervu velkou. Žádná dnes pod hranicí
+2× není, ale nebylo to tak vždycky — než se šířky sloupců opravily, dva
+zdroje (500px) byly pod potřebou pro 380px zobrazení. Ověřovat vždy **po**
+usazení layoutu, ne jen při výběru zdrojového souboru.
 
 ---
 
