@@ -101,6 +101,21 @@ const jeAktivni = (href: string) => cesta === href;
 					tlacitko.setAttribute("aria-expanded", "false");
 				});
 			}
+
+			const hlavicka = document.querySelector(".hlavicka");
+			if (hlavicka) {
+				let planovano = false;
+				const aktualizujPripnuti = () => {
+					hlavicka.classList.toggle("pripnuta", window.scrollY > 0);
+					planovano = false;
+				};
+				window.addEventListener("scroll", () => {
+					if (planovano) return;
+					planovano = true;
+					requestAnimationFrame(aktualizujPripnuti);
+				}, { passive: true });
+				aktualizujPripnuti();
+			}
 		</script>
 	</body>
 </html>

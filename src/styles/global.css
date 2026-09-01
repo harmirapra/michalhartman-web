@@ -228,6 +228,14 @@ main.bez-hero {
 	}
 }
 
+/* .pripnuta — po scrollu (JS v Base.astro) hlavička přepne z absolute na
+   fixed a zůstane nahoře po zbytek stránky. Replikuje chování WP pluginu
+   "she-header" na michalhartman.com: i pár px scrollu hlavičku připne,
+   zpět na absolute se nevrací. Beze změny pozadí/výšky — jen position. */
+.hlavicka.pripnuta {
+	position: fixed;
+}
+
 .znacka {
 	font-weight: 300;
 	font-size: var(--znacka-velikost);
