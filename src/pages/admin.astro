@@ -172,6 +172,7 @@ import "../styles/global.css";
 							>← Zpět na hledání</button
 						>
 						<h2 id="admin-fotka-detail-klic" class="admin-mono admin-detail-klic"></h2>
+						<img id="admin-fotka-detail-nahled" class="admin-detail-nahled" alt="" hidden />
 						<div class="admin-panel-telo">
 							<div class="admin-radek">
 								<span class="admin-radek-k">klíčová slova</span>
@@ -717,6 +718,15 @@ import "../styles/global.css";
 		vybranaPolozka = polozka;
 
 		document.querySelector("#admin-fotka-detail-klic")!.textContent = polozka.klic;
+		const nahled = document.querySelector<HTMLImageElement>("#admin-fotka-detail-nahled")!;
+		if (polozka.nahledUrl) {
+			nahled.src = polozka.nahledUrl;
+			nahled.alt = polozka.klic;
+			nahled.hidden = false;
+		} else {
+			nahled.removeAttribute("src");
+			nahled.hidden = true;
+		}
 		document.querySelector("#admin-fotka-detail-klicova-slova")!.textContent = polozka.klicovaSlova.length
 			? polozka.klicovaSlova.join(", ")
 			: "žádná";
@@ -939,6 +949,29 @@ import "../styles/global.css";
 		color: var(--barva-text-tlumeny);
 		font-size: 13px;
 		margin: var(--mezera-1) 0 0;
+	}
+
+	/* Název fotky pod tlačítkem "Zpět" — h1/h2 v global.css má jen
+	   margin-bottom (--mezera-3), margin-top žádný. Bez tohohle byl název
+	   nalepený přímo na tlačítko nad ním (kontakt horního a spodního
+	   okraje). Michal, 1. 9. 2026. */
+	.admin-detail-klic {
+		margin-top: var(--mezera-3);
+	}
+
+	/* Náhled fotky v detailu — stejná velikost (600px derivát) jako
+	   miniatury v seznamu výsledků, jen zobrazená větší a v přirozeném
+	   poměru stran (ne object-fit: cover jako .admin-nahled). Michal,
+	   1. 9. 2026: "absolutní jistota při mazání", vědomě NE plná velikost
+	   pro lightbox (2048px) — tohle je jen orientační náhled. */
+	.admin-detail-nahled {
+		display: block;
+		max-width: 320px;
+		max-height: 320px;
+		width: auto;
+		height: auto;
+		margin: var(--mezera-2) 0 0;
+		background: var(--barva-oddelovac);
 	}
 
 	.admin-hint--spatne {
