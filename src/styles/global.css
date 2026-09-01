@@ -198,14 +198,6 @@ main.bez-hero {
 	padding-top: calc(var(--vyska-hlavicky) + var(--mezera-8));
 }
 
-/* ---------- odkaz-vzhled: vypadá jako odkaz, ale je to <span> bez href ---------- */
-/* Používá se pro záměrně nefunkční položky (Galerie, jazyky, patička) — viz DESIGN.md a
-   task-2-brief.md, sekce „Rozsah MVP". Nikdy href="#". */
-
-.odkaz-vzhled {
-	color: inherit;
-}
-
 /* ---------- hlavička ---------- */
 /* position: absolute — header plave nad hero fotkou, netlačí ji dolů. DESIGN.md sekce 10. */
 
@@ -253,29 +245,14 @@ main.bez-hero {
 	letter-spacing: 0;
 }
 
-.navigace a,
-.navigace .odkaz-vzhled {
+.navigace a {
 	color: var(--barva-textu);
 	text-decoration: none;
 }
 
-.navigace a[aria-current="page"],
-.navigace .aktivni {
+.navigace a[aria-current="page"] {
 	border-bottom: 1px solid var(--barva-textu);
 	padding-bottom: 2px;
-}
-
-.jazyky {
-	display: flex;
-	align-items: center;
-	gap: var(--mezera-1);
-	margin-left: var(--mezera-1);
-	padding-left: var(--mezera-3);
-	border-left: 1px solid var(--barva-oddelovac);
-}
-
-.jazyky-oddelovac {
-	color: var(--barva-oddelovac-text);
 }
 
 /* Hamburger — otevírá/zavírá mobilní navigaci (viz <script> v Base.astro). */

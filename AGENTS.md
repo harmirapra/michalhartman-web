@@ -338,7 +338,7 @@ Kdyby na ně vedl odkaz, kontrola odkazů by ho označila jako rozbitý.
 | **Galerie jako druhý rozcestník** | na úvodní stránce (odkaz v navigaci a v drobečkách je od fáze 6 funkční) | zatím mimo rozsah |
 | Ochrana osobních údajů | v patičce | zatím mimo rozsah |
 | Nastavení cookies | v patičce | zatím mimo rozsah |
-| Anglická verze `/en/` | přepínač jazyka v hlavičce | zatím mimo rozsah |
+| Anglická verze `/en/` | přepínač jazyka v hlavičce (odstraněn 1. 9. 2026 — WP jako zdroj anglického obsahu byl vypnut při migraci) | mimo rozsah |
 
 **Nepřidávej odkazy na tyto stránky, dokud nevzniknou.**
 
