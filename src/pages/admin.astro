@@ -1069,6 +1069,32 @@ import "../styles/global.css";
 		flex: none;
 	}
 
+	/* Detail fotky: "klíčová slova" a "v galeriích" mohou nést dlouhý seznam
+	   (fotka klidně s 10+ klíčovými slovy) — na rozdíl od krátkých hodnot
+	   jinde (počet galerií, "ano"/"ne") se tahle hodnota MUSÍ zalamovat.
+	   Bez tohohle `white-space: nowrap` z .admin-radek-v donutilo dlouhý
+	   seznam nezalomit se, a `.admin-radek-k` (min-width:0) ustoupil až na
+	   nulu — krátký popisek "klíčová slova" se pak lámal písmeno po
+	   písmenu. Scoped jen na #admin-fotka-detail — v seznamu výsledků
+	   hledání (#admin-fotka-vysledky) je naopak .admin-radek-k dlouhý
+	   název fotky, který se naopak zalamovat/zmenšovat smí. */
+	#admin-fotka-detail-klicova-slova,
+	#admin-fotka-detail-galerie {
+		white-space: normal;
+		text-align: right;
+		/* flex: none z .admin-radek-v (výš) by hodnotu nikdy nedovolilo
+		   zmenšit pod její přirozenou šířku ani přes white-space: normal —
+		   overflow by zůstal, jen by se přesunul jinam. min-width: 0 je tu
+		   nutné, protože flex položky mají výchozí min-width: auto (never
+		   shrink below content), ne 0. */
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	#admin-fotka-detail .admin-radek-k {
+		flex: none;
+	}
+
 	.admin-radek-v--spatne {
 		color: var(--barva-zvyrazneni);
 	}
@@ -1082,8 +1108,8 @@ import "../styles/global.css";
 	}
 
 	.admin-nahled {
-		width: 32px;
-		height: 32px;
+		width: 42px; /* 32px + 10px, Michal 1. 9. 2026 — na hraně použitelnosti */
+		height: 42px;
 		flex: none;
 		object-fit: cover;
 		background: var(--barva-oddelovac);
