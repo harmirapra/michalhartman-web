@@ -191,6 +191,9 @@ import "../styles/global.css";
 						</p>
 						<p id="admin-fotka-akce-chyba" class="admin-chyba" role="alert" hidden></p>
 						<div class="admin-akce">
+							<button type="button" id="admin-fotka-kopirovat" class="admin-btn admin-btn--ghost"
+								>Kopírovat odkaz</button
+							>
 							<button type="button" id="admin-fotka-odebrat" class="admin-btn admin-btn--danger"
 								>Odebrat ze serveru</button
 							>
@@ -206,7 +209,7 @@ import "../styles/global.css";
 </html>
 
 <script>
-	import { odpovidaKlicovemuSlovu, nacistIndex, type Fotka } from "../lib/fotky";
+	import { odpovidaKlicovemuSlovu, nacistIndex, urlOdvozene, type Fotka } from "../lib/fotky";
 
 	// --- Token: jen v paměti téhle stránky, NIKDY v úložišti prohlížeče. ---
 	// Zavřením záložky mizí; po reloadu je potřeba ho vložit znovu — to je
@@ -593,6 +596,7 @@ import "../styles/global.css";
 		klicovaSlova: string[];
 		pocetNahledu: number;
 		selhalo: boolean;
+		nahledUrl: string | null;
 	}
 
 	let hledaniNacteno = false;
@@ -615,6 +619,11 @@ import "../styles/global.css";
 		return GALERIE.filter((g) => odpovidaKlicovemuSlovu(fotkaPodobna, g.klic)).map((g) => g.nazev);
 	}
 
+	function prvniGalerieProPolozku(polozka: Polozka): { nazev: string; klic: string } | null {
+		const fotkaPodobna = { klicovaSlova: polozka.klicovaSlova } as Fotka;
+		return GALERIE.find((g) => odpovidaKlicovemuSlovu(fotkaPodobna, g.klic)) ?? null;
+	}
+
 	async function nactiHledani() {
 		const nacitani = document.querySelector<HTMLElement>("#admin-fotka-nacitani")!;
 		const chybaEl = document.querySelector<HTMLElement>("#admin-fotka-chyba")!;
@@ -629,6 +638,7 @@ import "../styles/global.css";
 				klicovaSlova: Array.isArray(f.klicovaSlova) ? f.klicovaSlova.map(String) : [],
 				pocetNahledu: f.odvozene?.length ?? 0,
 				selhalo: false,
+				nahledUrl: urlOdvozene(f, 600),
 			}));
 			// Selhané fotky (viz /admin/report) nejsou v /api/index.json — nikdy
 			// nedostaly úspěšný záznam. Zahrnují se sem, aby šly najít a odebrat
@@ -638,6 +648,7 @@ import "../styles/global.css";
 				klicovaSlova: [],
 				pocetNahledu: 0,
 				selhalo: true,
+				nahledUrl: null,
 			}));
 			hledatelnePolozky = [...zIndexu, ...zeSelhanych];
 			hledaniNacteno = true;
@@ -664,7 +675,15 @@ import "../styles/global.css";
 				.slice(0, 50)
 				.map((p) => {
 					const pocet = galerieProPolozku(p).length;
-					return `<div class="admin-radek admin-radek--klikaci" data-klic="${escapovat(p.klic)}" role="button" tabindex="0"><span class="admin-radek-k admin-mono">${escapovat(p.klic)}</span><span class="admin-radek-v">${p.selhalo ? "zpracování selhalo" : pocetGalerii(pocet)}</span></div>`;
+					return `<div class="admin-radek admin-radek--klikaci" data-klic="${escapovat(p.klic)}" role="button" tabindex="0">
+	${
+		p.nahledUrl
+			? `<img class="admin-nahled" src="${escapovat(p.nahledUrl)}" alt="" loading="lazy" width="600" height="600">`
+			: `<span class="admin-nahled admin-nahled--prazdny" aria-hidden="true"></span>`
+	}
+	<span class="admin-radek-k admin-mono">${escapovat(p.klic)}</span>
+	<span class="admin-radek-v">${p.selhalo ? "zpracování selhalo" : pocetGalerii(pocet)}</span>
+</div>`;
 				})
 				.join("");
 		}
@@ -709,6 +728,19 @@ import "../styles/global.css";
 			? "originál (zpracování se nezdařilo, žádné náhledy nevznikly)"
 			: `originál + ${pocetNahleduText(polozka.pocetNahledu)}`;
 
+		const tlacitkoKopirovat = document.querySelector<HTMLButtonElement>("#admin-fotka-kopirovat")!;
+		const galerieOdkazu = prvniGalerieProPolozku(polozka);
+		if (galerieOdkazu) {
+			tlacitkoKopirovat.disabled = false;
+			tlacitkoKopirovat.title = "";
+			tlacitkoKopirovat.dataset.href = `/${galerieOdkazu.klic}/?foto=${encodeURIComponent(polozka.klic)}`;
+		} else {
+			tlacitkoKopirovat.disabled = true;
+			tlacitkoKopirovat.title = "Fotka není v žádné galerii";
+			tlacitkoKopirovat.dataset.href = "";
+		}
+		tlacitkoKopirovat.textContent = "Kopírovat odkaz";
+
 		skryjChybu(document.querySelector("#admin-fotka-akce-chyba")!);
 		hledaniSekce.hidden = true;
 		detailSekce.hidden = false;
@@ -722,6 +754,37 @@ import "../styles/global.css";
 
 	document.querySelector("#admin-fotka-zpet")!.addEventListener("click", zavriDetail);
 	document.querySelector("#admin-fotka-zrusit")!.addEventListener("click", zavriDetail);
+
+	document.querySelector<HTMLButtonElement>("#admin-fotka-kopirovat")!.addEventListener("click", async () => {
+		const tlacitkoKopirovat = document.querySelector<HTMLButtonElement>("#admin-fotka-kopirovat")!;
+		const href = tlacitkoKopirovat.dataset.href;
+		if (!href) return;
+		const plnaUrl = `${location.origin}${href}`;
+		try {
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(plnaUrl);
+			} else {
+				const docasny = document.createElement("textarea");
+				docasny.value = plnaUrl;
+				docasny.style.position = "fixed";
+				docasny.style.opacity = "0";
+				document.body.appendChild(docasny);
+				docasny.select();
+				document.execCommand("copy");
+				docasny.remove();
+			}
+			tlacitkoKopirovat.textContent = "Zkopírováno";
+			setTimeout(() => {
+				tlacitkoKopirovat.textContent = "Kopírovat odkaz";
+			}, 1500);
+		} catch (chyba) {
+			console.error("[admin] kopírování odkazu selhalo:", chyba);
+			tlacitkoKopirovat.textContent = "Kopírování selhalo";
+			setTimeout(() => {
+				tlacitkoKopirovat.textContent = "Kopírovat odkaz";
+			}, 1500);
+		}
+	});
 
 	document.querySelector("#admin-fotka-odebrat")!.addEventListener("click", async () => {
 		if (!vybranaPolozka) return;
@@ -1016,6 +1079,18 @@ import "../styles/global.css";
 
 	.admin-radek--klikaci {
 		cursor: pointer;
+	}
+
+	.admin-nahled {
+		width: 32px;
+		height: 32px;
+		flex: none;
+		object-fit: cover;
+		background: var(--barva-oddelovac);
+	}
+
+	.admin-nahled--prazdny {
+		display: inline-block;
 	}
 
 	.admin-radek--klikaci:hover,
