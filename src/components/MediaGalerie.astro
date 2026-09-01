@@ -112,6 +112,8 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 		img.loading = index < POCET_EAGER ? "eager" : "lazy";
 		img.decoding = "async";
 		img.alt = alt;
+		img.draggable = false;
+		img.oncontextmenu = () => false;
 		odkaz.appendChild(img);
 
 		// ImageObject (schema.org) — vedlejší produkt dat, která index nese
@@ -192,6 +194,15 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 			// Stažení zůstává vypnuté — v jádru PhotoSwipe v5 není žádné
 			// tlačítko stažení, jen se sem záměrně nepřidává (žádný plugin).
 		});
+
+		lightbox.on("contentAppend", (e) => {
+			const el = e.content.element;
+			if (el instanceof HTMLImageElement) {
+				el.draggable = false;
+				el.oncontextmenu = () => false;
+			}
+		});
+
 		lightbox.init();
 
 		priZmeneSirky(prekresli);

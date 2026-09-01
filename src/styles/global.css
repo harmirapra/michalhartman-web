@@ -648,6 +648,8 @@ main.bez-hero {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+	/* Potlačení iOS "Save Image" menu po podržení — ergonomie, ne ochrana. */
+	-webkit-touch-callout: none;
 }
 
 .media-galerie-popisek {
@@ -770,6 +772,12 @@ main.bez-hero {
    černá plocha z designového tokenu, ne knihovní výchozí hodnota. */
 .pswp {
 	--pswp-bg: var(--barva-pozadi);
+}
+
+/* Potlačení iOS "Save Image" menu po podržení na velkém obrázku v lightboxu
+   — ergonomie a vizuální čistota, ne ochrana obsahu. */
+.pswp__img {
+	-webkit-touch-callout: none;
 }
 
 /* ---------- textová stránka (Ochrana osobních údajů, Impressum) — úkol 1 ---------- */
