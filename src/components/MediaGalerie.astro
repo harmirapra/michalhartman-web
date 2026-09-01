@@ -53,6 +53,11 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 	// global.css).
 	const SIZES = "(max-width: 767px) 100vw, 50vw";
 
+	// Sdílené přes všechny galerie na stránce — dneska je vždycky jedna, ale
+	// kdyby jich bylo víc, `?foto=` se má zkusit otevřít jen jednou, ne v
+	// každé z nich.
+	let uzOtevreno = false;
+
 	// Fisher-Yates — nové zamíchání při každém načtení stránky (rozhodnutí B0).
 	function zamichej<T>(pole: T[]): T[] {
 		const vysledek = pole.slice();
@@ -204,6 +209,29 @@ const { klicoveSlovo, layout = "radky", popisky = false } = Astro.props;
 		});
 
 		lightbox.init();
+
+		// Odkaz sdílený z OG meta tagů (server/ogFoto.js) vede na
+		// `<cesta-galerie>/?foto=<klíč>` — po načtení stránky rovnou otevřít
+		// lightbox na téhle fotce, ne nechat návštěvníka hledat ji v mřížce.
+		const klicZUrl = new URLSearchParams(location.search).get("foto");
+		if (klicZUrl && !uzOtevreno) {
+			// Index MUSÍ být z `promichane` (zamíchané pořadí, ve kterém se
+			// skutečně vykresluje DOM) — index z nezamíchaného zdrojového pole
+			// by otevřel náhodně jinou fotku.
+			const idx = promichane.findIndex((f) => f.klic === klicZUrl);
+			if (idx >= 0) {
+				uzOtevreno = true;
+				lightbox.loadAndOpen(idx);
+			}
+			// idx < 0: tichý no-op, žádný console.error — překlep v URL, smazaná
+			// fotka nebo fotka z jiné galerie jsou legitimní stavy (stejné
+			// pravidlo jako zbytek repa: prázdný výsledek není chyba).
+		}
+
+		// Po zavření lightboxu odstranit `?foto=` z adresního řádku — jinak by
+		// reload nebo návrat tlačítkem zpět otevíral lightbox znovu pořád
+		// dokola. replaceState, ne pushState (nepřidávat novou položku historie).
+		lightbox.on("close", () => history.replaceState({}, "", location.pathname));
 
 		priZmeneSirky(prekresli);
 	}

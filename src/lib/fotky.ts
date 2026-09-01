@@ -3,6 +3,12 @@
 // /gallery/ (jedna vybraná fotka na dlaždici, žádný lightbox). Držet na
 // jednom místě, aby se pravidlo shody klíčového slova a filtr
 // zobrazitelnosti nerozjely do dvou mírně odlišných kopií (fáze 6).
+//
+// Čisté funkce (urlOdvozene/jeZobrazitelna/odpovidaKlicovemuSlovu) žijí
+// v fotkyJadro.js (obyčejný ESM, umí ho importovat i Node — server/ogFoto.js)
+// a tady se jen re-exportují, ať se import v komponentách nemusí měnit.
+
+export { urlOdvozene, jeZobrazitelna, odpovidaKlicovemuSlovu } from "./fotkyJadro.js";
 
 export interface OdvozenaVelikost {
 	velikost: number;
@@ -21,31 +27,6 @@ export interface Fotka {
 
 export interface Index {
 	fotky?: Fotka[];
-}
-
-export function urlOdvozene(fotka: Fotka, velikost: number): string | null {
-	const zaznam = fotka.odvozene?.find((o) => o.velikost === velikost);
-	return zaznam ? `/photos/${zaznam.soubor}` : null;
-}
-
-// Fotka bez rozměrů nebo bez některé odvozené velikosti se vynechá — bez
-// těchhle dat by nešlo bezpečně nastavit width/height (stránka by
-// poskakovala) ani napojit lightbox/dlaždici na plnou velikost.
-export function jeZobrazitelna(fotka: Fotka): boolean {
-	return Boolean(
-		fotka.rozmery?.sirka &&
-			fotka.rozmery?.vyska &&
-			urlOdvozene(fotka, 600) &&
-			urlOdvozene(fotka, 1200) &&
-			urlOdvozene(fotka, 2048),
-	);
-}
-
-export function odpovidaKlicovemuSlovu(fotka: Fotka, klicLower: string): boolean {
-	const klicovaSlova = fotka.klicovaSlova;
-	if (!Array.isArray(klicovaSlova)) return false;
-	// Exact match, case insensitive (kontrakt K2/K3) — žádné částečné shody.
-	return klicovaSlova.some((k) => String(k).toLowerCase() === klicLower);
 }
 
 // Načte a naparsuje /api/index.json. Skutečná selhání (síť, neplatný JSON)
