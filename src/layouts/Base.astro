@@ -32,11 +32,6 @@ const jeAktivni = (href: string) => cesta === href;
 				<a href="/" aria-current={jeAktivni("/") ? "page" : undefined}>Úvod</a>
 				<a href="/gallery/" aria-current={jeAktivni("/gallery/") ? "page" : undefined}>Galerie</a>
 				<a href="/about/" aria-current={jeAktivni("/about/") ? "page" : undefined}>O mně</a>
-				<div class="jazyky">
-					<span class="odkaz-vzhled aktivni">CZ</span>
-					<span class="jazyky-oddelovac">/</span>
-					<span class="odkaz-vzhled">EN</span>
-				</div>
 			</nav>
 			<button
 				type="button"
