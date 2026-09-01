@@ -18,20 +18,7 @@
 // zarovnaných řádků (--polozka-pomer, viz global.css) a pomocné funkce nad
 // indexem (src/lib/fotky.ts), aby se nic nezdvojovalo.
 import Base from "../layouts/Base.astro";
-
-interface Dlazdice {
-	slug: string;
-	nazev: string;
-	href: string;
-	klicGalerie: string;
-}
-
-// Pořadí podle wireframu (Main.dc.html): Řecko, Skotsko, Francie.
-const DLAZDICE: Dlazdice[] = [
-	{ slug: "greece", nazev: "Řecko", href: "/greece/", klicGalerie: "Greece" },
-	{ slug: "scotland", nazev: "Skotsko", href: "/scotland/", klicGalerie: "Scotland" },
-	{ slug: "france", nazev: "Francie", href: "/france/", klicGalerie: "France" },
-];
+import { GALERIE } from "../lib/galerie";
 ---
 
 <Base
@@ -43,14 +30,14 @@ const DLAZDICE: Dlazdice[] = [
 
 		<div class="rozcestnik-dlazdice-radek">
 			{
-				DLAZDICE.map((d) => (
+				GALERIE.map((g) => (
 					<a
 						class="rozcestnik-dlazdice"
-						href={d.href}
-						data-slug={d.slug}
-						data-klic-galerie={d.klicGalerie}
+						href={g.cesta}
+						data-slug={g.slug}
+						data-klic-galerie={g.klicGalerie}
 					>
-						<span class="rozcestnik-dlazdice-popisek">{d.nazev}</span>
+						<span class="rozcestnik-dlazdice-popisek">{g.nazev}</span>
 					</a>
 				))
 			}

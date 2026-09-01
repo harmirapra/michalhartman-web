@@ -28,8 +28,10 @@ import { handleAdminRebuild } from './server/adminRebuild.js';
 import { handleAdminReport } from './server/adminReport.js';
 import { DERIVED_DIR, ensureDataDirs } from './server/dataDir.js';
 import { ensureIndexHealthy, readIndexOrEmpty } from './server/mediaIndex.js';
+import { vytvorHandlerOgFoto } from './server/ogFoto.js';
 import { handleStav } from './server/stav.js';
 import { handleUpload } from './server/upload.js';
+import { GALERIE } from './src/lib/galerie.js';
 
 // Bez tohohle si `libvips` drží vlastní vyrovnávací paměť a paměťová stopa
 // při hromadném zpracování (stovky fotek za běh) roste. Změřená špička
@@ -102,6 +104,23 @@ app.get('/api/index.json', async (_req, res) => {
 	res.set('Cache-Control', 'no-cache');
 	res.status(200).json(index);
 });
+
+// GET /<galerie>/?foto=<klíč> — vloží OG meta tagy pro jednu fotku (sdílení
+// na Facebook a další sítě, viz server/ogFoto.js pro celé zdůvodnění: jejich
+// scraper nespouští JS, takže musí vidět <head> hotový už v HTML, co server
+// pošle). Musí být PŘED finálním `express.static(distDir)` níže — jinak by
+// static vrátil `dist/<galerie>/index.html` beze změny dřív, než se tahle
+// routa vůbec spustí. Bez `?foto=` handler vždy zavolá next() a chování je
+// bit-identické s dnešním stavem.
+//
+// POZOR (Express 5 / path-to-regexp@8): syntaxe jako
+// `:galerie(scotland|greece|france)` v cestě route není podporovaná a
+// vyhodí výjimku PŘI STARTU serveru. Proto pole konkrétních cest
+// (GALERIE.map(g => g.cesta)), ne regex v route stringu.
+app.get(
+	GALERIE.map((g) => g.cesta),
+	vytvorHandlerOgFoto({ distDir }),
+);
 
 // Odvozené velikosti fotek. Bezpečné cachovat natvrdo a nadlouho — název
 // nese otisk obsahu, takže se pod stejnou adresou obsah nikdy nezmění.
