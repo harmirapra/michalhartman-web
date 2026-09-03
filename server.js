@@ -168,6 +168,26 @@ app.use((req, res) => {
 		);
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
 	console.log(`Server naslouchá na portu ${port}`);
 });
+
+// Railway posílá SIGTERM při nahrazení nasazení novým — bez vlastního
+// handleru by proces spadl na výchozí chování (okamžité ukončení) a při
+// spuštění přes `npm start` navíc `npm` ohlásí "npm error signal SIGTERM",
+// což Railway loguje jako chybu při KAŽDÉM nasazení (viz railway.json,
+// startCommand tomu brání tím, že `npm` vynechává z cesty signálu úplně —
+// tenhle handler je druhá, nezávislá vrstva ochrany pro čisté vypnutí,
+// kdyby server běžel i jinak než přes Railway/railway.json).
+function vypniCistě(signal) {
+	console.log(`Přijat ${signal}, ukončuji server.`);
+	server.close(() => {
+		process.exit(0);
+	});
+	// Kdyby `server.close` nedoběhl (visící spojení), po chvíli ukončit natvrdo
+	// — lepší tvrdé ukončení než viset až do SIGKILL od Railway.
+	setTimeout(() => process.exit(0), 5000).unref();
+}
+
+process.on('SIGTERM', vypniCistě);
+process.on('SIGINT', vypniCistě);
