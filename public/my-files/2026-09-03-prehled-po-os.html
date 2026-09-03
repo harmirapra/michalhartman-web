@@ -180,6 +180,12 @@
 		background: var(--otevrene-wash); padding: 0.15rem 0.45rem; border-radius: 2px;
 	}
 	.bod-detail { font-size: 0.87rem; color: var(--ink-soft); }
+	.bod.vyreseno { border-left-color: var(--hotovo); }
+	.bod.vyreseno .bod-kdy { color: var(--hotovo); background: var(--hotovo-wash); }
+
+	.jmena-tab { width: 100%; border-collapse: collapse; font-size: 0.87rem; margin-top: 0.4rem; }
+	.jmena-tab th, .jmena-tab td { text-align: left; padding: 0.35rem 0.6rem 0.35rem 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+	.jmena-tab th { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); font-weight: 500; }
 
 	code {
 		font-family: var(--mono); font-size: 0.86em;
@@ -199,23 +205,24 @@
 		<div class="stitek">Projekt po-os · Fáze: idea → koncept · 3. 9. 2026</div>
 		<h1>po-os — agentní systém pro podporu projektového řízení</h1>
 		<p class="perex">
-			Sada specializovaných AI specialistů nad metodikou PRINCE2 (doplněnou
-			o PMI PMBOK), inspirovaná konceptem "SHINE" — princip přebíráme, jména
-			a rozpad rolí ne. Tento přehled shrnuje PRD, průzkum trhu a navrženou
-			strukturu 10 specialistů.
+			Sada specializovaných AI specialistů postavená na ověřených postupech
+			oborové praxe projektového řízení, bez vázání na jednu konkrétní
+			pojmenovanou metodickou značku. Tento přehled shrnuje PRD, průzkum
+			trhu a navrženou strukturu 11 specialistů.
 		</p>
 	</header>
 
 	<section class="uvod-sekce">
 		<h2>O čem projekt je</h2>
 		<p>
-			Formální projektové řízení (PRINCE2/PMBOK) vyžaduje sadu strukturovaných
-			dokumentů — zakládací listinu, rozpad práce, plán, registr rizik, popis
-			výstupů, komunikační plán. Dnes to dělá zkušený PM ručně, nebo obecný
+			Formální projektové řízení vyžaduje sadu strukturovaných dokumentů —
+			zakládací listinu, rozpad práce, plán, registr rizik, popis výstupů,
+			komunikační plán, rozpočet. Dnes to dělá zkušený PM ručně, nebo obecný
 			LLM chat bez metodické opory a bez kontinuity mezi kroky. <b>po-os</b>
 			nabízí místo jednoho obecného asistenta <b>sadu úzce specializovaných
-			agentů</b>, z nichž každý pokrývá jeden krok metodiky a navazuje na
-			výstup předchozího — a každý umí pracovat ve třech režimech.
+			agentů</b>, z nichž každý pokrývá jednu oblast řízení projektu a
+			navazuje na výstup předchozího — a každý umí pracovat ve třech
+			režimech.
 		</p>
 	</section>
 
@@ -268,10 +275,13 @@
 		<p>
 			Zadaná návaznost: <b>Project/Stage Planner staví na WBS Expertovi</b>,
 			ne přímo na iniciačních dokumentech. WBS Expert je vědomý most mezi
-			PRINCE2 produktovým rozpadem (PBS) a PMBOK pracovním rozpadem (WBS).
+			produktově orientovaným rozpadem výstupů (PBS) a pracovním rozpadem
+			(WBS). Nově navazuje i <b>Budget Manager</b>, který odhaduje náklady
+			na stejném rozpadu práce a rozpočet měkce provazuje s plánem od
+			Planneru.
 		</p>
 		<figure>
-			<svg viewBox="0 0 980 200" role="img" aria-label="Project Brief Expert předává Initiation Strategistovi, ten Deliverable Definition Expertovi, ten WBS Expertovi, který jako jediný krmí Project/Stage Plannera.">
+			<svg viewBox="0 0 980 235" role="img" aria-label="Project Brief Expert předává Initiation Strategistovi, ten Deliverable Definition Expertovi, ten WBS Expertovi, který krmí Project/Stage Plannera i Budget Managera.">
 				<defs>
 					<marker id="sip" viewBox="0 0 10 10" refX="9" refY="5"
 						markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -285,11 +295,14 @@
 					<rect x="416" y="70" width="200" height="56" rx="2" />
 					<rect x="652" y="70" width="150" height="56" rx="2" />
 					<rect x="838" y="70" width="134" height="56" rx="2" opacity="0.9" />
+					<rect x="657" y="163" width="140" height="40" rx="2" stroke-dasharray="3 2" opacity="0.85" />
 
 					<path d="M176 98 L212 98" marker-end="url(#sip)" />
 					<path d="M380 98 L416 98" marker-end="url(#sip)" />
 					<path d="M616 98 L652 98" marker-end="url(#sip)" />
 					<path d="M802 98 L838 98" marker-end="url(#sip)" />
+					<path d="M727 126 L727 163" marker-end="url(#sip)" />
+					<path d="M797 183 L838 130" marker-end="url(#sip)" stroke-dasharray="2 2" opacity="0.7" />
 				</g>
 
 				<g font-family="Archivo, sans-serif" fill="currentColor">
@@ -307,12 +320,14 @@
 					<text x="905" y="94" font-size="12" text-anchor="middle">Project /</text>
 					<text x="905" y="110" font-size="12" text-anchor="middle">Stage Planner</text>
 
-					<text x="194" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">Project Brief</text>
-					<text x="398" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">PID</text>
-					<text x="634" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">Product Description</text>
+					<text x="727" y="187" font-size="11.5" text-anchor="middle">Budget Manager</text>
+
+					<text x="194" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">zahajovací dokument</text>
+					<text x="398" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">iniciační dokumentace</text>
+					<text x="634" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">formální popis výstupu</text>
 					<text x="820" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">PBS + WBS</text>
 
-					<text x="516" y="150" font-size="11" text-anchor="middle" opacity="0.75">Povinná závislost ze zadání: Planner nesmí navazovat přímo na PID, jen na WBS Expert.</text>
+					<text x="516" y="222" font-size="11" text-anchor="middle" opacity="0.75">Povinná závislost: Planner i Budget Manager navazují na WBS Expert, ne přímo na iniciační dokumentaci. Přerušovaná čára = měkká vazba rozpočtu na plán.</text>
 				</g>
 			</svg>
 			<figcaption>
@@ -327,23 +342,24 @@
 
 	<section>
 		<h2>Struktura specialistů — Fáze 1 (MVP)</h2>
-		<p>Mapa 10 specialistů na procesy/témata PRINCE2 a vazbu na PMBOK.</p>
+		<p>Mapa 11 specialistů na fáze a průřezové oblasti řízení projektu.</p>
 		<div class="tab-obal">
 			<table>
 				<thead>
-					<tr><th>#</th><th>Specialista</th><th>PRINCE2/PMBOK vazba</th><th>Klíčový výstup</th><th>Závisí na</th></tr>
+					<tr><th>#</th><th>Specialista</th><th>Fáze / oblast řízení</th><th>Klíčový výstup</th><th>Závisí na</th></tr>
 				</thead>
 				<tbody>
-					<tr><td>1</td><td>Navigator</td><td>Meta-vrstva nad SU→IP→CS/MP→SB→CP</td><td>Doporučení „kde jsem, co dál"</td><td>—</td></tr>
-					<tr><td>2</td><td>Project Brief Expert</td><td>SU (Starting up a Project)</td><td>Project Brief</td><td>—</td></tr>
-					<tr><td>3</td><td>Initiation Strategist</td><td>IP + Business Case/Organization/Quality/Risk</td><td>PID</td><td>Project Brief Expert</td></tr>
-					<tr><td>4</td><td><b>Deliverable Definition Expert</b> <span class="chip chip-novy">nový</span></td><td>Téma Quality — Product Description</td><td>Formální popis výstupu</td><td>Initiation Strategist</td></tr>
-					<tr><td>5</td><td><b>WBS Expert</b> <span class="chip chip-novy">nový</span></td><td>Téma Plans (PBS/Product Flow) ↔ PMBOK WBS</td><td>PBS + WBS</td><td>Deliverable Definition Expert</td></tr>
-					<tr><td>6</td><td>Project/Stage Planner</td><td>Téma Plans + procesy CS/SB</td><td>Harmonogram, RACI</td><td><b>WBS Expert</b></td></tr>
-					<tr><td>7</td><td>Risk Manager</td><td>Téma Risk</td><td>Risk Register</td><td>Initiation Strategist (kontext)</td></tr>
-					<tr><td>8</td><td>Meeting &amp; Reporting Analyst</td><td>Téma Progress (Highlight/Checkpoint Report)</td><td>Zápis → akční položky</td><td>— (ad-hoc vstup)</td></tr>
-					<tr><td>9</td><td>Communications Expert</td><td>Téma Organization</td><td>Komunikační plán</td><td>Project Brief Expert (měkká)</td></tr>
-					<tr><td>10</td><td>Agile Tailoring Consultant</td><td>PRINCE2 Agile (rozšíření)</td><td>Doporučení k tailoringu</td><td>Initiation Strategist</td></tr>
+					<tr><td>1</td><td>Navigator</td><td>Meta-vrstva nad celým průchodem projektem</td><td>Doporučení „kde jsem, co dál"</td><td>—</td></tr>
+					<tr><td>2</td><td>Project Brief Expert</td><td>Zahájení projektu</td><td>Zahajovací dokument projektu</td><td>—</td></tr>
+					<tr><td>3</td><td>Initiation Strategist</td><td>Iniciace/naplánování + byznys zdůvodnění, organizace, kvalita, rizika</td><td>Iniciační dokumentace projektu</td><td>Project Brief Expert</td></tr>
+					<tr><td>4</td><td><b>Deliverable Definition Expert</b> <span class="chip chip-novy">nový</span></td><td>Oblast kvalita — formální popis výstupu</td><td>Formální popis výstupu</td><td>Initiation Strategist</td></tr>
+					<tr><td>5</td><td><b>WBS Expert</b> <span class="chip chip-novy">nový</span></td><td>Oblast plány — produktově orientovaný rozpad ↔ WBS</td><td>PBS + WBS</td><td>Deliverable Definition Expert</td></tr>
+					<tr><td>6</td><td>Project/Stage Planner</td><td>Oblast plány + řízení fáze</td><td>Harmonogram, RACI</td><td><b>WBS Expert</b></td></tr>
+					<tr><td>7</td><td>Risk Manager</td><td>Oblast rizika</td><td>Registr rizik</td><td>Initiation Strategist (kontext)</td></tr>
+					<tr><td>8</td><td>Meeting &amp; Reporting Analyst</td><td>Oblast postup/reporting</td><td>Zápis → akční položky</td><td>— (ad-hoc vstup)</td></tr>
+					<tr><td>9</td><td>Communications Expert</td><td>Oblast organizace</td><td>Komunikační plán</td><td>Project Brief Expert (měkká)</td></tr>
+					<tr><td>10</td><td>Agile Tailoring Consultant</td><td>Agilní přizpůsobení řízeného rámce</td><td>Doporučení k tailoringu</td><td>Initiation Strategist</td></tr>
+					<tr><td>11</td><td><b>Budget Manager</b> <span class="chip chip-novy">nový</span></td><td>Oblast náklady/rozpočet</td><td>Rozpočet projektu, sledování čerpání</td><td><b>WBS Expert</b>; měkká vazba na Planner</td></tr>
 				</tbody>
 			</table>
 		</div>
@@ -374,9 +390,9 @@
 			<div class="bod">
 				<div class="bod-hlava">
 					<span class="bod-co">Program Starter / Program Strategist</span>
-					<span class="bod-kdy">mimo PRINCE2</span>
+					<span class="bod-kdy">mimo scope</span>
 				</div>
-				<div class="bod-detail">Programová úroveň patří pod MSP, ne PRINCE2 (čistě projektová metodika) — vyžaduje samostatné rozhodnutí o rozšíření metodického základu.</div>
+				<div class="bod-detail">Programová úroveň (řízení více souvisejících projektů) je jiná disciplína než projektové řízení — vyžaduje samostatné rozhodnutí o rozšíření metodického základu.</div>
 			</div>
 		</div>
 	</section>
@@ -391,15 +407,15 @@
 		<div class="zjisteni">
 			<div class="zjist">
 				<div class="zjist-co">Trh je nasycený na úrovni "AI vrstva nad PM nástrojem"</div>
-				<div class="zjist-detail">Asana, Monday, ClickUp, Jira, Smartsheet, Wrike i MS Project mají v 2025–2026 srovnatelné AI funkce (report generation, risk flagging, NL automatizace) — ale <b>metodicky neutrální</b>, žádný negeneruje dokumenty ve struktuře PRINCE2/PMBOK.</div>
+				<div class="zjist-detail">Asana, Monday, ClickUp, Jira, Smartsheet, Wrike i MS Project mají v 2025–2026 srovnatelné AI funkce (report generation, risk flagging, NL automatizace) — ale <b>metodicky neutrální</b>, žádný negeneruje dokumenty ve struktuře formálních PM metodik ani nemapuje své funkce na standardní oblasti řízení projektu.</div>
 			</div>
 			<div class="zjist">
-				<div class="zjist-co">Specializovaní PRINCE2/PMBOK agenti prakticky chybí</div>
-				<div class="zjist-detail">Jediné nalezené pokusy (IntakeWise, pm-standardsInsight) jsou rané indie projekty jednoho vývojáře, ne robustní produkt. SHINE (inspirační vzor) je česká konzultační firma s GPT copiloty jako doplňkem ke vzdělávacímu byznysu, ne škálovatelný SaaS.</div>
+				<div class="zjist-co">Specializovaní agenti navázaní na formální PM praxi prakticky chybí</div>
+				<div class="zjist-detail">Jediné nalezené pokusy (IntakeWise, pm-standardsInsight) jsou rané indie projekty jednoho vývojáře, ne robustní produkt. Nalezený inspirační vzor z průzkumu je česká konzultační firma s GPT copiloty jako doplňkem ke vzdělávacímu byznysu, ne škálovatelný SaaS.</div>
 			</div>
 			<div class="zjist">
-				<div class="zjist-co">Diferenciátor (a): přísná vazba na PRINCE2/PMBOK strukturu</div>
-				<div class="zjist-detail">Být prvním nástrojem, kde struktura specialistů je <b>přímo odvozená</b> z PRINCE2 procesů/témat a PMBOK oblastí, s výstupy ve standardizovaných šablonách.</div>
+				<div class="zjist-co">Diferenciátor (a): přísná vazba na fáze a oblasti řízení projektu</div>
+				<div class="zjist-detail">Být prvním nástrojem, kde struktura specialistů je <b>přímo odvozená</b> z ověřených, obecně uznávaných fází a oblastí řízení projektu, s výstupy ve standardizovaných šablonách — bez vázání produktu na jednu konkrétní pojmenovanou metodickou značku.</div>
 			</div>
 			<div class="zjist">
 				<div class="zjist-co">Diferenciátor (b): formalizovaný režim Oponent</div>
@@ -427,14 +443,21 @@
 					<span class="bod-co">Finální jméno a pozicování produktu</span>
 					<span class="bod-kdy">k rozhodnutí</span>
 				</div>
-				<div class="bod-detail"><code>po-os</code> je pracovní jméno, souvisí s brandingem pro model B/C.</div>
-			</div>
-			<div class="bod">
-				<div class="bod-hlava">
-					<span class="bod-co">Míra míchání PMBOK do PRINCE2</span>
-					<span class="bod-kdy">částečně zodpovězeno</span>
+				<div class="bod-detail">
+					<code>po-os</code> je pracovní jméno, souvisí s brandingem pro model B/C.
+					Navrženo 5 anglických kandidátů (3. 9. 2026, zatím neověřeno z hlediska
+					dostupnosti domény/OSS konfliktu jména):
 				</div>
-				<div class="bod-detail">Konkrétní místo odchylky (WBS Expert) je navržené, finální „je to OK" je na uživateli.</div>
+				<table class="jmena-tab">
+					<thead><tr><th>Kandidát</th><th>Proč by mohl fungovat</th></tr></thead>
+					<tbody>
+						<tr><td><b>Method Loom</b></td><td>Specialisté se „vplétají" do jedné konzistentní sady dokumentů — obraz návaznosti mezi kroky.</td></tr>
+						<tr><td><b>StageForge</b></td><td>Odkaz na fázovaný průchod projektem a „kování" strukturovaných výstupů krok za krokem.</td></tr>
+						<tr><td><b>Charterly</b></td><td>Krátké, moderní SaaS jméno odkazující na zakládací dokumenty projektu.</td></tr>
+						<tr><td><b>Delivery Compass</b></td><td>Navigační metafora (koresponduje se specialistou Navigator) — provází strukturovaným řízením projektu.</td></tr>
+						<tr><td><b>PMOS</b></td><td>Kontinuita s pracovním jménem <code>po-os</code> — čte se jako „Project Management Operating System", krátké a zapamatovatelné.</td></tr>
+					</tbody>
+				</table>
 			</div>
 			<div class="bod">
 				<div class="bod-hlava">
@@ -450,68 +473,84 @@
 				</div>
 				<div class="bod-detail">Nebo dvě udržované varianty specialistů?</div>
 			</div>
-			<div class="bod">
+		</div>
+
+		<h3>Vyřešené otázky</h3>
+		<div class="otevrene">
+			<div class="bod vyreseno">
 				<div class="bod-hlava">
-					<span class="bod-co">Licenční/právní rámec pro model C</span>
-					<span class="bod-kdy">k ověření</span>
+					<span class="bod-co">Míra kombinace přístupů k rozpadu práce</span>
+					<span class="bod-kdy">vyřešeno 3. 9. 2026</span>
 				</div>
-				<div class="bod-detail">Jak smí produkt referencovat PRINCE2® jako registrovanou metodiku/ochrannou známku.</div>
+				<div class="bod-detail">Systém se záměrně nehlásí k žádné konkrétní pojmenované metodice/značce a popisuje se jako postavený na „ověřené oborové praxi projektového řízení". Konkrétní místo kombinace přístupů (produktově orientovaný rozpad výstupů vs. klasický WBS) zůstává u specialisty WBS Expert.</div>
+			</div>
+			<div class="bod vyreseno">
+				<div class="bod-hlava">
+					<span class="bod-co">Licenční/právní rámec referencování konkrétní metodiky</span>
+					<span class="bod-kdy">vyřešeno 3. 9. 2026</span>
+				</div>
+				<div class="bod-detail">Rozhodnuto nereferencovat žádnou konkrétní pojmenovanou metodiku/značku (ani na úrovni atribuce) nikde v produktu ani dokumentaci, čímž se otázka licenčních dopadů takového referencování stává bezpředmětnou.</div>
 			</div>
 		</div>
 	</section>
 
 	<section>
 		<h2>Specialisté ve zkratce</h2>
-		<p>Kompaktní přehled všech 10 — plný návrh dovedností v jednotlivých souborech.</p>
+		<p>Kompaktní přehled všech 11 — plný návrh dovedností v jednotlivých souborech.</p>
 		<div class="specialiste">
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">01</span><h3>Navigator</h3></div>
-				<div class="spec-radek">Meta-vrstva nad procesním modelem — doporučí, kterého specialistu použít dál.</div>
+				<div class="spec-radek">Meta-vrstva nad celým průchodem projektem — doporučí, kterého specialistu použít dál.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent — slabší, meta-vrstva nemá formální dokument k oponování">O⁻</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">02</span><h3>Project Brief Expert</h3></div>
-				<div class="spec-radek">Ujasní cíl, výstupy, sponzora, hranice → návrh <b>Project Brief</b> (proces SU).</div>
+				<div class="spec-radek">Ujasní cíl, výstupy, sponzora, hranice → návrh <b>zahajovacího dokumentu projektu</b>.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">03</span><h3>Initiation Strategist</h3></div>
-				<div class="spec-radek">Zpřesní rozsah, přístupy a milníky → návrh <b>PID</b> (proces IP). Vstup: Project Brief Expert.</div>
+				<div class="spec-radek">Zpřesní rozsah, přístupy a milníky → návrh <b>iniciační dokumentace projektu</b>. Vstup: Project Brief Expert.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec novy">
 				<div class="spec-hlava"><span class="spec-cislo">04</span><h3>Deliverable Definition Expert</h3><span class="chip chip-novy">nový</span></div>
-				<div class="spec-radek">Formální popis jednoho výstupu — <b>Product Description</b> (téma Quality). Silný režim Oponent.</div>
+				<div class="spec-radek">Formální popis jednoho výstupu — <b>deliverable specification</b> (oblast kvalita). Silný režim Oponent.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec novy">
 				<div class="spec-hlava"><span class="spec-cislo">05</span><h3>WBS Expert</h3><span class="chip chip-novy">nový</span></div>
-				<div class="spec-radek">Most mezi PRINCE2 PBS/Product Flow a PMBOK WBS. Vstup povinně z Deliverable Definition Expert.</div>
+				<div class="spec-radek">Most mezi produktově orientovaným rozpadem výstupů (PBS) a pracovním rozpadem (WBS). Vstup povinně z Deliverable Definition Expert.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">06</span><h3>Project/Stage Planner</h3></div>
-				<div class="spec-radek">Harmonogram a RACI — vstup <b>povinně z WBS Expert</b>, ne přímo z PID (zadání uživatele).</div>
+				<div class="spec-radek">Harmonogram a RACI — vstup <b>povinně z WBS Expert</b>, ne přímo z iniciační dokumentace.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">07</span><h3>Risk Manager</h3></div>
-				<div class="spec-radek">Risk Register a reakce na rizika (téma Risk). Kontext z Initiation Strategist, jinak nezávislý.</div>
+				<div class="spec-radek">Registr rizik a návrh reakcí (oblast rizika). Kontext z Initiation Strategist, jinak nezávislý.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">08</span><h3>Meeting &amp; Reporting Analyst</h3></div>
-				<div class="spec-radek">Zápis z porady → úkoly, status report (téma Progress). Vstup ad-hoc, bez pevné závislosti.</div>
+				<div class="spec-radek">Zápis z porady → úkoly, status report (oblast postup/reporting). Vstup ad-hoc, bez pevné závislosti.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent — realisticky slabší u neformálních zápisů">O⁻</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">09</span><h3>Communications Expert</h3></div>
-				<div class="spec-radek">Komunikační plán (téma Organization). Měkká vazba na Project Brief Expert.</div>
+				<div class="spec-radek">Komunikační plán (oblast organizace). Měkká vazba na Project Brief Expert.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 			<div class="spec">
 				<div class="spec-hlava"><span class="spec-cislo">10</span><h3>Agile Tailoring Consultant</h3></div>
-				<div class="spec-radek">Doporučení k přizpůsobení agilní dodávce bez ztráty PRINCE2 governance (PRINCE2 Agile).</div>
+				<div class="spec-radek">Doporučení k přizpůsobení agilní dodávce bez ztráty governance nad řízeným rámcem.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec novy">
+				<div class="spec-hlava"><span class="spec-cislo">11</span><h3>Budget Manager</h3><span class="chip chip-novy">nový</span></div>
+				<div class="spec-radek">Odhad nákladů, rozpočet a sledování čerpání (oblast náklady). Vstup <b>povinně z WBS Expert</b>; měkká vazba na Project/Stage Planner.</div>
 				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
 			</div>
 		</div>
