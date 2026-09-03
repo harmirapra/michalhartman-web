@@ -1,0 +1,529 @@
+<title>po-os — přehled projektu</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+	:root {
+		--ground: #eef1f4;
+		--surface: #ffffff;
+		--surface-sunk: #e3e8ed;
+		--line: #cbd5dd;
+		--line-soft: #dde4ea;
+		--ink: #16202a;
+		--ink-soft: #4d5f6e;
+		--ink-faint: #75868f;
+		--akcent: #0d5f7d;
+		--akcent-wash: #dce9f0;
+		--hotovo: #2f6b4f;
+		--hotovo-wash: #dcebe3;
+		--otevrene: #9a5a1f;
+		--otevrene-wash: #f2e6d6;
+		--nový: #7a3b8f;
+		--nový-wash: #ece0f2;
+		--display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+		--body: "Archivo", -apple-system, BlinkMacSystemFont, sans-serif;
+		--mono: "JetBrains Mono", ui-monospace, monospace;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--ground: #10171d; --surface: #18222b; --surface-sunk: #0c1319;
+			--line: #2d3d4a; --line-soft: #223039;
+			--ink: #e6edf3; --ink-soft: #a8bac7; --ink-faint: #7e919e;
+			--akcent: #6bb8d8; --akcent-wash: #17303d;
+			--hotovo: #7cc199; --hotovo-wash: #17301f;
+			--otevrene: #d9a05e; --otevrene-wash: #362614;
+			--nový: #c99bda; --nový-wash: #2c1f35;
+		}
+	}
+	:root[data-theme="dark"] {
+		--ground: #10171d; --surface: #18222b; --surface-sunk: #0c1319;
+		--line: #2d3d4a; --line-soft: #223039;
+		--ink: #e6edf3; --ink-soft: #a8bac7; --ink-faint: #7e919e;
+		--akcent: #6bb8d8; --akcent-wash: #17303d;
+		--hotovo: #7cc199; --hotovo-wash: #17301f;
+		--otevrene: #d9a05e; --otevrene-wash: #362614;
+		--nový: #c99bda; --nový-wash: #2c1f35;
+	}
+
+	* { box-sizing: border-box; }
+
+	body {
+		margin: 0; background: var(--ground); color: var(--ink);
+		font-family: var(--body); font-size: 16px; line-height: 1.6;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.wrap {
+		max-width: 66rem; margin: 0 auto; padding: 3rem 1.25rem 5rem;
+		display: flex; flex-direction: column; gap: 3.5rem;
+	}
+
+	.stitek {
+		font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em;
+		text-transform: uppercase; color: var(--ink-faint);
+	}
+
+	h1 {
+		font-family: var(--display); font-weight: 800;
+		font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.05;
+		letter-spacing: -0.02em; margin: 0; text-wrap: balance;
+	}
+
+	h2 {
+		font-family: var(--display); font-weight: 600; font-size: 1.45rem;
+		letter-spacing: -0.01em; margin: 0; text-wrap: balance;
+	}
+
+	h3 {
+		font-family: var(--display); font-weight: 600; font-size: 1.05rem;
+		letter-spacing: -0.005em; margin: 0;
+	}
+
+	.hlavicka { display: flex; flex-direction: column; gap: 1rem; }
+	.perex { font-size: 1.075rem; color: var(--ink-soft); max-width: 42rem; margin: 0; }
+	section { display: flex; flex-direction: column; gap: 1.25rem; }
+	p { margin: 0; max-width: 44rem; }
+	.uvod-sekce p { max-width: 48rem; }
+
+	/* --- štítky/chips --- */
+	.chip {
+		display: inline-flex; align-items: center; gap: 0.3rem;
+		font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em;
+		padding: 0.18rem 0.5rem; border-radius: 2px; white-space: nowrap;
+	}
+	.chip-akcent { background: var(--akcent-wash); color: var(--akcent); }
+	.chip-hotovo { background: var(--hotovo-wash); color: var(--hotovo); }
+	.chip-otevrene { background: var(--otevrene-wash); color: var(--otevrene); }
+	.chip-novy { background: var(--nový-wash); color: var(--nový); }
+
+	/* --- grid karet (modely, režimy) --- */
+	.karty { display: grid; grid-template-columns: 1fr; gap: 0.9rem; }
+	@media (min-width: 48rem) { .karty-3 { grid-template-columns: repeat(3, 1fr); } }
+
+	.karta {
+		background: var(--surface); border: 1px solid var(--line-soft);
+		border-top: 3px solid var(--akcent); border-radius: 3px;
+		padding: 1.15rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem;
+	}
+	.karta-cislo {
+		font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em;
+		text-transform: uppercase; color: var(--akcent);
+	}
+	.karta-nazev { font-family: var(--display); font-weight: 600; font-size: 1.04rem; }
+	.karta p { font-size: 0.89rem; color: var(--ink-soft); max-width: none; }
+
+	/* --- figure / SVG diagram --- */
+	figure {
+		margin: 0; background: var(--surface); border: 1px solid var(--line-soft);
+		border-radius: 3px; padding: 1.35rem 1.15rem 1.1rem;
+		display: flex; flex-direction: column; gap: 0.9rem; overflow-x: auto;
+	}
+	figure svg { max-width: 100%; height: auto; display: block; min-width: 44rem; }
+	figcaption { font-size: 0.86rem; color: var(--ink-soft); max-width: 48rem; }
+
+	/* --- specialisté grid --- */
+	.specialiste { display: grid; grid-template-columns: 1fr; gap: 0.9rem; }
+	@media (min-width: 48rem) { .specialiste { grid-template-columns: repeat(2, 1fr); } }
+	.spec {
+		background: var(--surface); border: 1px solid var(--line-soft);
+		border-left: 3px solid var(--akcent); border-radius: 3px;
+		padding: 1.05rem 1.15rem; display: flex; flex-direction: column; gap: 0.55rem;
+	}
+	.spec.novy { border-left-color: var(--nový); }
+	.spec-hlava { display: flex; align-items: baseline; gap: 0.55rem; flex-wrap: wrap; }
+	.spec-cislo { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); }
+	.spec-radek { font-size: 0.87rem; color: var(--ink-soft); }
+	.spec-radek b { color: var(--ink); font-weight: 600; }
+	.spec-rezimy { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.15rem; }
+	.rezim-tag {
+		font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.05em;
+		padding: 0.12rem 0.4rem; border-radius: 2px;
+		background: var(--surface-sunk); color: var(--ink-soft); cursor: default;
+	}
+
+	/* --- tabulka --- */
+	.tab-obal { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: 3px; }
+	table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 0.86rem; min-width: 34rem; }
+	th, td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+	thead th {
+		font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.08em;
+		text-transform: uppercase; color: var(--ink-faint);
+		background: var(--surface-sunk); font-weight: 500;
+	}
+	tbody tr:last-child td { border-bottom: none; }
+	td:first-child { font-weight: 500; }
+	td code, p code, .spec-radek code { font-size: 0.85em; }
+
+	/* --- rozhodnutí / zjištění (border-left) --- */
+	.zjisteni { display: flex; flex-direction: column; gap: 0.75rem; }
+	.zjist {
+		background: var(--surface); border: 1px solid var(--line-soft);
+		border-left: 3px solid var(--hotovo); border-radius: 3px;
+		padding: 1rem 1.15rem; display: flex; flex-direction: column; gap: 0.35rem;
+	}
+	.zjist-co { font-weight: 600; font-size: 0.95rem; }
+	.zjist-detail { font-size: 0.89rem; color: var(--ink-soft); }
+	.zjist-detail b { color: var(--ink); font-weight: 600; }
+
+	/* --- otevřené/odložené body --- */
+	.otevrene { display: flex; flex-direction: column; gap: 0.7rem; }
+	.bod {
+		background: var(--surface); border: 1px solid var(--line-soft);
+		border-left: 3px solid var(--otevrene); border-radius: 3px;
+		padding: 0.9rem 1.1rem; display: flex; flex-direction: column; gap: 0.3rem;
+	}
+	.bod-hlava { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+	.bod-co { font-weight: 600; font-size: 0.93rem; }
+	.bod-kdy {
+		font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.07em;
+		text-transform: uppercase; color: var(--otevrene);
+		background: var(--otevrene-wash); padding: 0.15rem 0.45rem; border-radius: 2px;
+	}
+	.bod-detail { font-size: 0.87rem; color: var(--ink-soft); }
+
+	code {
+		font-family: var(--mono); font-size: 0.86em;
+		background: var(--surface-sunk); padding: 0.1em 0.35em; border-radius: 2px;
+	}
+
+	.pozn {
+		font-size: 0.82rem; color: var(--ink-faint);
+		border-top: 1px solid var(--line-soft); padding-top: 1.25rem; max-width: 46rem;
+	}
+	.pozn code { font-size: 0.95em; }
+</style>
+
+<div class="wrap">
+
+	<header class="hlavicka">
+		<div class="stitek">Projekt po-os · Fáze: idea → koncept · 3. 9. 2026</div>
+		<h1>po-os — agentní systém pro podporu projektového řízení</h1>
+		<p class="perex">
+			Sada specializovaných AI specialistů nad metodikou PRINCE2 (doplněnou
+			o PMI PMBOK), inspirovaná konceptem "SHINE" — princip přebíráme, jména
+			a rozpad rolí ne. Tento přehled shrnuje PRD, průzkum trhu a navrženou
+			strukturu 10 specialistů.
+		</p>
+	</header>
+
+	<section class="uvod-sekce">
+		<h2>O čem projekt je</h2>
+		<p>
+			Formální projektové řízení (PRINCE2/PMBOK) vyžaduje sadu strukturovaných
+			dokumentů — zakládací listinu, rozpad práce, plán, registr rizik, popis
+			výstupů, komunikační plán. Dnes to dělá zkušený PM ručně, nebo obecný
+			LLM chat bez metodické opory a bez kontinuity mezi kroky. <b>po-os</b>
+			nabízí místo jednoho obecného asistenta <b>sadu úzce specializovaných
+			agentů</b>, z nichž každý pokrývá jeden krok metodiky a navazuje na
+			výstup předchozího — a každý umí pracovat ve třech režimech.
+		</p>
+	</section>
+
+	<section>
+		<h2>Tři pracovní režimy</h2>
+		<p>Nezávislé na konkrétním specialistovi — platí pro celou sadu.</p>
+		<div class="karty karty-3">
+			<div class="karta">
+				<div class="karta-cislo">Režim 1</div>
+				<div class="karta-nazev">Tvůrce</div>
+				<p>Ze zadaných vstupů sám navrhne kompletní draft výstupu. Pro uživatele, který nemá nic hotového a potřebuje první verzi rychle.</p>
+			</div>
+			<div class="karta">
+				<div class="karta-cislo">Režim 2</div>
+				<div class="karta-nazev">Průvodce</div>
+				<p>Provede uživatele tvorbou krok za krokem, ptá se a vysvětluje proč. Pro juniora, který se metodiku učí za chodu.</p>
+			</div>
+			<div class="karta">
+				<div class="karta-cislo">Režim 3</div>
+				<div class="karta-nazev">Oponent</div>
+				<p>Zhodnotí hotový návrh uživatele — chybějící prvky, nekonzistence s metodikou. Nepřepisuje od nuly, dává druhý pár očí.</p>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Tři zvažované provozní modely</h2>
+		<p>K rozhodnutí — nejde nutně o vzájemně vylučující se varianty, viz PRD.</p>
+		<div class="karty karty-3">
+			<div class="karta">
+				<div class="karta-cislo">Model A</div>
+				<div class="karta-nazev">PACT + coding agent</div>
+				<p>Specialisté jako markdown agenti/skilly spouštění přes coding agenta (Claude Code). Bez vlastní infrastruktury — interní/prototypovací provoz.</p>
+			</div>
+			<div class="karta">
+				<div class="karta-cislo">Model B</div>
+				<div class="karta-nazev">Hostovaná služba</div>
+				<p>Vlastní aplikace, backend volá LLM přímo nebo přes OpenRouter. Širší trh, platící zákazníci, SaaS model.</p>
+			</div>
+			<div class="karta">
+				<div class="karta-cislo">Model C</div>
+				<div class="karta-nazev">Licencovaný fork</div>
+				<p>Jádro se licencuje třetí straně (konzultační/školicí firmě) s volitelnou zakázkovou customizací (branding, vlastní specialisté).</p>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Klíčový řetězec — od výstupu k plánu</h2>
+		<p>
+			Zadaná návaznost: <b>Project/Stage Planner staví na WBS Expertovi</b>,
+			ne přímo na iniciačních dokumentech. WBS Expert je vědomý most mezi
+			PRINCE2 produktovým rozpadem (PBS) a PMBOK pracovním rozpadem (WBS).
+		</p>
+		<figure>
+			<svg viewBox="0 0 980 200" role="img" aria-label="Project Brief Expert předává Initiation Strategistovi, ten Deliverable Definition Expertovi, ten WBS Expertovi, který jako jediný krmí Project/Stage Plannera.">
+				<defs>
+					<marker id="sip" viewBox="0 0 10 10" refX="9" refY="5"
+						markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+						<polygon points="0,0 10,5 0,10" fill="currentColor" />
+					</marker>
+				</defs>
+
+				<g fill="none" stroke="currentColor" stroke-width="1.25">
+					<rect x="8" y="70" width="168" height="56" rx="2" />
+					<rect x="212" y="70" width="168" height="56" rx="2" />
+					<rect x="416" y="70" width="200" height="56" rx="2" />
+					<rect x="652" y="70" width="150" height="56" rx="2" />
+					<rect x="838" y="70" width="134" height="56" rx="2" opacity="0.9" />
+
+					<path d="M176 98 L212 98" marker-end="url(#sip)" />
+					<path d="M380 98 L416 98" marker-end="url(#sip)" />
+					<path d="M616 98 L652 98" marker-end="url(#sip)" />
+					<path d="M802 98 L838 98" marker-end="url(#sip)" />
+				</g>
+
+				<g font-family="Archivo, sans-serif" fill="currentColor">
+					<text x="92" y="94" font-size="12.5" text-anchor="middle">Project Brief</text>
+					<text x="92" y="110" font-size="12.5" text-anchor="middle">Expert</text>
+
+					<text x="296" y="94" font-size="12.5" text-anchor="middle">Initiation</text>
+					<text x="296" y="110" font-size="12.5" text-anchor="middle">Strategist</text>
+
+					<text x="516" y="94" font-size="12.5" text-anchor="middle">Deliverable</text>
+					<text x="516" y="110" font-size="12.5" text-anchor="middle">Definition Expert</text>
+
+					<text x="727" y="102" font-size="12.5" text-anchor="middle">WBS Expert</text>
+
+					<text x="905" y="94" font-size="12" text-anchor="middle">Project /</text>
+					<text x="905" y="110" font-size="12" text-anchor="middle">Stage Planner</text>
+
+					<text x="194" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">Project Brief</text>
+					<text x="398" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">PID</text>
+					<text x="634" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">Product Description</text>
+					<text x="820" y="60" font-size="10.5" text-anchor="middle" opacity="0.65">PBS + WBS</text>
+
+					<text x="516" y="150" font-size="11" text-anchor="middle" opacity="0.75">Povinná závislost ze zadání: Planner nesmí navazovat přímo na PID, jen na WBS Expert.</text>
+				</g>
+			</svg>
+			<figcaption>
+				Kolem tohoto řetězce dále pracují nezávislejší specialisté — Risk
+				Manager a Agile Tailoring Consultant (kontext z Initiation
+				Strategist), Communications Expert (měkká vazba na Project Brief
+				Expert), Meeting &amp; Reporting Analyst (bez pevné závislosti) a
+				Navigator (meta-vrstva nad celým modelem). Detail v tabulce níže.
+			</figcaption>
+		</figure>
+	</section>
+
+	<section>
+		<h2>Struktura specialistů — Fáze 1 (MVP)</h2>
+		<p>Mapa 10 specialistů na procesy/témata PRINCE2 a vazbu na PMBOK.</p>
+		<div class="tab-obal">
+			<table>
+				<thead>
+					<tr><th>#</th><th>Specialista</th><th>PRINCE2/PMBOK vazba</th><th>Klíčový výstup</th><th>Závisí na</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>1</td><td>Navigator</td><td>Meta-vrstva nad SU→IP→CS/MP→SB→CP</td><td>Doporučení „kde jsem, co dál"</td><td>—</td></tr>
+					<tr><td>2</td><td>Project Brief Expert</td><td>SU (Starting up a Project)</td><td>Project Brief</td><td>—</td></tr>
+					<tr><td>3</td><td>Initiation Strategist</td><td>IP + Business Case/Organization/Quality/Risk</td><td>PID</td><td>Project Brief Expert</td></tr>
+					<tr><td>4</td><td><b>Deliverable Definition Expert</b> <span class="chip chip-novy">nový</span></td><td>Téma Quality — Product Description</td><td>Formální popis výstupu</td><td>Initiation Strategist</td></tr>
+					<tr><td>5</td><td><b>WBS Expert</b> <span class="chip chip-novy">nový</span></td><td>Téma Plans (PBS/Product Flow) ↔ PMBOK WBS</td><td>PBS + WBS</td><td>Deliverable Definition Expert</td></tr>
+					<tr><td>6</td><td>Project/Stage Planner</td><td>Téma Plans + procesy CS/SB</td><td>Harmonogram, RACI</td><td><b>WBS Expert</b></td></tr>
+					<tr><td>7</td><td>Risk Manager</td><td>Téma Risk</td><td>Risk Register</td><td>Initiation Strategist (kontext)</td></tr>
+					<tr><td>8</td><td>Meeting &amp; Reporting Analyst</td><td>Téma Progress (Highlight/Checkpoint Report)</td><td>Zápis → akční položky</td><td>— (ad-hoc vstup)</td></tr>
+					<tr><td>9</td><td>Communications Expert</td><td>Téma Organization</td><td>Komunikační plán</td><td>Project Brief Expert (měkká)</td></tr>
+					<tr><td>10</td><td>Agile Tailoring Consultant</td><td>PRINCE2 Agile (rozšíření)</td><td>Doporučení k tailoringu</td><td>Initiation Strategist</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p style="font-size: 0.85rem; color: var(--ink-soft);">
+			Plný návrh dovedností (režimy, pravidla, příklady) pro každého
+			specialistu je v <code>specialists/&lt;jméno&gt;.md</code>.
+		</p>
+	</section>
+
+	<section>
+		<h2>Fáze 2 — vědomě odložené</h2>
+		<p>Aby MVP zůstalo zvládnutelné, tři kandidáti se zaznamenávají, ne navrhují teď.</p>
+		<div class="otevrene">
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Change &amp; Issue Control Specialist</span>
+					<span class="bod-kdy">Fáze 2</span>
+				</div>
+				<div class="bod-detail">Téma Change — nižší frekvence použití v MVP než Plans/Risk.</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Stage Boundary / Closure Specialist</span>
+					<span class="bod-kdy">Fáze 2</span>
+				</div>
+				<div class="bod-detail">Procesy SB/CP — relevantní až při reálném běhu/uzavírání projektu.</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Program Starter / Program Strategist</span>
+					<span class="bod-kdy">mimo PRINCE2</span>
+				</div>
+				<div class="bod-detail">Programová úroveň patří pod MSP, ne PRINCE2 (čistě projektová metodika) — vyžaduje samostatné rozhodnutí o rozšíření metodického základu.</div>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Průzkum trhu — shrnutí</h2>
+		<p>
+			Plný report se zdroji a mírou ověření (⚑ přímý zdroj / ~ jen souhrn
+			vyhledávání) je v <code>research/market-research.md</code>. Tady jen
+			závěr gap analýzy.
+		</p>
+		<div class="zjisteni">
+			<div class="zjist">
+				<div class="zjist-co">Trh je nasycený na úrovni "AI vrstva nad PM nástrojem"</div>
+				<div class="zjist-detail">Asana, Monday, ClickUp, Jira, Smartsheet, Wrike i MS Project mají v 2025–2026 srovnatelné AI funkce (report generation, risk flagging, NL automatizace) — ale <b>metodicky neutrální</b>, žádný negeneruje dokumenty ve struktuře PRINCE2/PMBOK.</div>
+			</div>
+			<div class="zjist">
+				<div class="zjist-co">Specializovaní PRINCE2/PMBOK agenti prakticky chybí</div>
+				<div class="zjist-detail">Jediné nalezené pokusy (IntakeWise, pm-standardsInsight) jsou rané indie projekty jednoho vývojáře, ne robustní produkt. SHINE (inspirační vzor) je česká konzultační firma s GPT copiloty jako doplňkem ke vzdělávacímu byznysu, ne škálovatelný SaaS.</div>
+			</div>
+			<div class="zjist">
+				<div class="zjist-co">Diferenciátor (a): přísná vazba na PRINCE2/PMBOK strukturu</div>
+				<div class="zjist-detail">Být prvním nástrojem, kde struktura specialistů je <b>přímo odvozená</b> z PRINCE2 procesů/témat a PMBOK oblastí, s výstupy ve standardizovaných šablonách.</div>
+			</div>
+			<div class="zjist">
+				<div class="zjist-co">Diferenciátor (b): formalizovaný režim Oponent</div>
+				<div class="zjist-detail">Nejsilnější a nejméně okopírovaný nález průzkumu — žádný konkurent nemá explicitní, pojmenovaný "kritickou revizi" mód srovnatelný s "AI code review" aplikovaným na PM dokumenty.</div>
+			</div>
+			<div class="zjist">
+				<div class="zjist-co">Diferenciátor (c): tři distribuční módy současně</div>
+				<div class="zjist-detail">Precedens (Meetily — lokální zdarma + placená cloud PRO verze) dokazuje životaschopnost hybridní distribuce. Žádný konkurent nenabízí lokální/SaaS/licencovaný fork jako oficiální strategii najednou.</div>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Otevřené otázky</h2>
+		<div class="otevrene">
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Fázovaná cesta, nebo rovnou multi-model architektura?</span>
+					<span class="bod-kdy">k rozhodnutí</span>
+				</div>
+				<div class="bod-detail">A → validace → B/C, nebo návrh všech tří modelů souběžně.</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Finální jméno a pozicování produktu</span>
+					<span class="bod-kdy">k rozhodnutí</span>
+				</div>
+				<div class="bod-detail"><code>po-os</code> je pracovní jméno, souvisí s brandingem pro model B/C.</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Míra míchání PMBOK do PRINCE2</span>
+					<span class="bod-kdy">částečně zodpovězeno</span>
+				</div>
+				<div class="bod-detail">Konkrétní místo odchylky (WBS Expert) je navržené, finální „je to OK" je na uživateli.</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">První reálný pilotní uživatel mimo Michala</span>
+					<span class="bod-kdy">k rozhodnutí</span>
+				</div>
+				<div class="bod-detail">Pro ověření modelu B a v jakém horizontu.</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Sdílený zdroj promptů mezi modelem A a B</span>
+					<span class="bod-kdy">k rozhodnutí</span>
+				</div>
+				<div class="bod-detail">Nebo dvě udržované varianty specialistů?</div>
+			</div>
+			<div class="bod">
+				<div class="bod-hlava">
+					<span class="bod-co">Licenční/právní rámec pro model C</span>
+					<span class="bod-kdy">k ověření</span>
+				</div>
+				<div class="bod-detail">Jak smí produkt referencovat PRINCE2® jako registrovanou metodiku/ochrannou známku.</div>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Specialisté ve zkratce</h2>
+		<p>Kompaktní přehled všech 10 — plný návrh dovedností v jednotlivých souborech.</p>
+		<div class="specialiste">
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">01</span><h3>Navigator</h3></div>
+				<div class="spec-radek">Meta-vrstva nad procesním modelem — doporučí, kterého specialistu použít dál.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent — slabší, meta-vrstva nemá formální dokument k oponování">O⁻</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">02</span><h3>Project Brief Expert</h3></div>
+				<div class="spec-radek">Ujasní cíl, výstupy, sponzora, hranice → návrh <b>Project Brief</b> (proces SU).</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">03</span><h3>Initiation Strategist</h3></div>
+				<div class="spec-radek">Zpřesní rozsah, přístupy a milníky → návrh <b>PID</b> (proces IP). Vstup: Project Brief Expert.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec novy">
+				<div class="spec-hlava"><span class="spec-cislo">04</span><h3>Deliverable Definition Expert</h3><span class="chip chip-novy">nový</span></div>
+				<div class="spec-radek">Formální popis jednoho výstupu — <b>Product Description</b> (téma Quality). Silný režim Oponent.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec novy">
+				<div class="spec-hlava"><span class="spec-cislo">05</span><h3>WBS Expert</h3><span class="chip chip-novy">nový</span></div>
+				<div class="spec-radek">Most mezi PRINCE2 PBS/Product Flow a PMBOK WBS. Vstup povinně z Deliverable Definition Expert.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">06</span><h3>Project/Stage Planner</h3></div>
+				<div class="spec-radek">Harmonogram a RACI — vstup <b>povinně z WBS Expert</b>, ne přímo z PID (zadání uživatele).</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">07</span><h3>Risk Manager</h3></div>
+				<div class="spec-radek">Risk Register a reakce na rizika (téma Risk). Kontext z Initiation Strategist, jinak nezávislý.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">08</span><h3>Meeting &amp; Reporting Analyst</h3></div>
+				<div class="spec-radek">Zápis z porady → úkoly, status report (téma Progress). Vstup ad-hoc, bez pevné závislosti.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent — realisticky slabší u neformálních zápisů">O⁻</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">09</span><h3>Communications Expert</h3></div>
+				<div class="spec-radek">Komunikační plán (téma Organization). Měkká vazba na Project Brief Expert.</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+			<div class="spec">
+				<div class="spec-hlava"><span class="spec-cislo">10</span><h3>Agile Tailoring Consultant</h3></div>
+				<div class="spec-radek">Doporučení k přizpůsobení agilní dodávce bez ztráty PRINCE2 governance (PRINCE2 Agile).</div>
+				<div class="spec-rezimy"><span class="rezim-tag" title="Tvůrce">T</span><span class="rezim-tag" title="Průvodce">P</span><span class="rezim-tag" title="Oponent">O</span></div>
+			</div>
+		</div>
+	</section>
+
+	<p class="pozn">
+		Úplné podklady jsou v PACTu: <code>0_Projects/po-os/PRD.md</code> (vize,
+		persony, provozní modely, otevřené otázky), <code>research/market-research.md</code>
+		(plný průzkum se zdroji), <code>specialists/README.md</code> (mapa a graf
+		závislostí) a <code>specialists/&lt;jméno&gt;.md</code> (dovednosti,
+		pravidla a příklad pro každého specialistu). Tento přehled je jen shrnutí
+		pro rychlou orientaci, ne náhrada zdrojových dokumentů.
+	</p>
+
+</div>
