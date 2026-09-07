@@ -26,8 +26,9 @@ import { requireAdminToken } from './server/adminAuth.js';
 import { handleAdminForget } from './server/adminForget.js';
 import { handleAdminRebuild } from './server/adminRebuild.js';
 import { handleAdminReport } from './server/adminReport.js';
-import { DERIVED_DIR, ensureDataDirs } from './server/dataDir.js';
+import { DERIVED_DIR, MY_FILES_DIR, ensureDataDirs } from './server/dataDir.js';
 import { ensureIndexHealthy, readIndexOrEmpty } from './server/mediaIndex.js';
+import { handleMyFilesList, handleMyFilesUpload } from './server/myFiles.js';
 import { vytvorHandlerOgFoto } from './server/ogFoto.js';
 import { handleStav } from './server/stav.js';
 import { handleUpload } from './server/upload.js';
@@ -91,6 +92,12 @@ adminRouter.get('/files', handleAdminFiles);
 adminRouter.post('/rebuild', handleAdminRebuild);
 adminRouter.get('/report', handleAdminReport);
 adminRouter.post('/forget', handleAdminForget);
+// „Dej mi to na web": jediná admin route s tělem požadavku v JSON, ne
+// v surových bajtech jako /admin/upload — proto vlastní express.json() jen
+// tady, ne globálně. requireAdminToken (adminRouter.use výše) proběhne dřív,
+// takže se tělo čte, až je token ověřený — stejná zásada jako u ostatních
+// admin rout.
+adminRouter.post('/my-files', express.json({ limit: '2mb' }), handleMyFilesUpload);
 app.use('/admin', adminRouter);
 
 app.use(compression());
@@ -104,6 +111,26 @@ app.get('/api/index.json', async (_req, res) => {
 	res.set('Cache-Control', 'no-cache');
 	res.status(200).json(index);
 });
+
+// „Dej mi to na web" — seznam se skládá za běhu z manifestu na disku
+// (server/myFiles.js), ne z Astro buildu, takže nová publikace bez redeploye
+// se v seznamu objeví okamžitě. Musí být PŘED finálním `express.static(distDir)`
+// níže, jinak by starý build (dokud existuje `dist/my-files/index.html`)
+// tuhle routu přebil.
+app.get('/my-files/', handleMyFilesList);
+
+// Jednotlivé publikované soubory. `express.static` bez nálezu souboru sám
+// zavolá `next()`, takže dosud git-committěné `dist/my-files/*.html` (viz
+// `public/my-files/`) zůstávají dostupné beze změny přes finální
+// `express.static(distDir)` níže, dokud se nemigrují (viz worklog).
+app.use(
+	'/my-files',
+	express.static(MY_FILES_DIR, {
+		setHeaders(res) {
+			res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+		},
+	}),
+);
 
 // GET /<galerie>/?foto=<klíč> — vloží OG meta tagy pro jednu fotku (sdílení
 // na Facebook a další sítě, viz server/ogFoto.js pro celé zdůvodnění: jejich

@@ -18,7 +18,22 @@ const TMP_DIR = path.join(DATA_DIR, 'tmp');
 const INDEX_PATH = path.join(STATE_DIR, 'index.json');
 const KOLIZE_PATH = path.join(STATE_DIR, 'kolize.json');
 
-const ALL_DIRS = [ORIGINALS_DIR, DERIVED_DIR, STATE_PHOTOS_DIR, STATE_FAILED_DIR, TMP_DIR];
+// „Dej mi to na web" — dočasné HTML reporty publikované mimo git (viz
+// server/myFiles.js). MY_FILES_DIR se servíruje veřejně jako statický adresář
+// (server.js), takže manifest (interní seznam pro GET /my-files/) záměrně
+// žije ve state/, ne vedle publikovaných HTML souborů — jinak by šel stáhnout
+// jako /my-files/manifest.json.
+const MY_FILES_DIR = path.join(DATA_DIR, 'my-files');
+const MY_FILES_MANIFEST_PATH = path.join(STATE_DIR, 'my-files-manifest.json');
+
+const ALL_DIRS = [
+	ORIGINALS_DIR,
+	DERIVED_DIR,
+	STATE_PHOTOS_DIR,
+	STATE_FAILED_DIR,
+	TMP_DIR,
+	MY_FILES_DIR,
+];
 
 function probeFileName() {
 	return path.join(TMP_DIR, `.zapisovatelnost-${process.pid}-${Date.now()}`);
@@ -96,6 +111,8 @@ export {
 	TMP_DIR,
 	INDEX_PATH,
 	KOLIZE_PATH,
+	MY_FILES_DIR,
+	MY_FILES_MANIFEST_PATH,
 	ensureDataDirs,
 	getStorageError,
 	getStorageStatus,

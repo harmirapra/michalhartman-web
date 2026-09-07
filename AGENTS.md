@@ -108,6 +108,31 @@ serveru počítadlo vynuluje.
 Poškozený/chybějící `index.json` se přebuduje sám při startu serveru
 (`ensureIndexHealthy()` v `server.js`).
 
+## „Dej mi to na web" — `/my-files/*` (fáze 9)
+
+Publikace dočasných HTML reportů (výstupy z jiných PACT projektů, ke čtení
+„on the go") na produkci **bez git commitu a bez redeploye**. Nahrazuje
+původní git-based MVP (`public/my-files/` + `src/pages/my-files/index.astro`,
+PR #44/#45) — stejný princip trvalého disku a `ADMIN_TOKEN` jako u fotek,
+jen samostatný modul `server/myFiles.js`.
+
+- `POST /admin/my-files` — JSON tělo `{ title, html }` (limit 2 MB). Title se
+  slugifikací (`slugifySegment` ze `server/slug.js`) převede na název souboru
+  `<YYYY-MM-DD>-<slug>.html`, zapíše se do `$DATA_DIR/my-files/` přes
+  `write-file-atomic`. **Stejný slug ve stejný den přepíše soubor na místě**,
+  nevznikne duplicita — to je záměr, ne chyba (report se dá aktualizovat
+  opakovanou publikací). Manifest (`state/my-files-manifest.json` — záměrně
+  MIMO `$DATA_DIR/my-files/`, aby nešel stáhnout jako
+  `/my-files/manifest.json`) se upsertuje podle `slug`+datum.
+- `GET /my-files/` — veřejné, BEZ tokenu (stejný model soukromí jako dřív:
+  odkaz bez hesla, ne skutečná ochrana). Vyrenderuje seznam z manifestu za
+  běhu — nová publikace se v seznamu objeví okamžitě, bez buildu.
+- Jednotlivé soubory se servírují přímo z disku
+  (`express.static($DATA_DIR/my-files)`, `server.js`).
+- Žádná expirace/úklid v v1 — ruční mazání, pokud/až bude potřeba.
+- Publikuje se skillem `my-files-publish` z PACT (trigger „dej mi to na web").
+  Podrobný plán: `plans/2026-09-07-my-files-publish-bez-redeploye.md`.
+
 `GET /api/index.json` (mimo `/admin/*`, bez tokenu) vrací index s hlavičkou
 `Cache-Control: no-cache` — mění se při rebuildu, nesmí se cachovat na edge.
 
