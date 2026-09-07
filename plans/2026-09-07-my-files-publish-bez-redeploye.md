@@ -60,10 +60,12 @@ otestovaný autentizační a storage vzor), ne nový vzor k vymýšlení.
 ## Úkol 1 — Datový adresář a manifest
 
 `server/dataDir.js`:
-- [ ] Přidat `MY_FILES_DIR = path.join(DATA_DIR, 'my-files')`.
-- [ ] Přidat `MANIFEST_PATH = path.join(MY_FILES_DIR, 'manifest.json')`.
-- [ ] Přidat `MY_FILES_DIR` do `ALL_DIRS`, ať ho `ensureDataDirs()` založí na startu.
-- [ ] Exportovat obě nové konstanty.
+- [x] Přidat `MY_FILES_DIR = path.join(DATA_DIR, 'my-files')`.
+- [x] Přidat `MANIFEST_PATH` — **umístěno do `STATE_DIR`, ne do `MY_FILES_DIR`**
+      (`server/dataDir.js` → `MY_FILES_MANIFEST_PATH`), aby nešel stáhnout jako
+      `/my-files/manifest.json` (ta složka se servíruje veřejně staticky).
+- [x] Přidat `MY_FILES_DIR` do `ALL_DIRS`, ať ho `ensureDataDirs()` založí na startu.
+- [x] Exportovat obě nové konstanty.
 
 Formát `manifest.json`: pole záznamů `{ slug, title, filename, publishedAt }`,
 seřazené od nejnovějšího. Chybějící/poškozený soubor = prázdné pole (stejná
@@ -71,9 +73,9 @@ filosofie jako `mediaIndex.js` u fotek — samoopravitelné, nikdy nespadne serv
 
 ## Úkol 2 — `server/myFiles.js`
 
-- [ ] `slugifyTitle(title)` — znovupoužij `slugifySegment` ze `server/slug.js`
+- [x] `slugifyTitle(title)` — znovupoužij `slugifySegment` ze `server/slug.js`
       (žádná nová slugifikační logika).
-- [ ] `handleMyFilesUpload(req, res)` (admin, chráněno `requireAdminToken`):
+- [x] `handleMyFilesUpload(req, res)` (admin, chráněno `requireAdminToken`):
   - vstup: `POST /admin/my-files`, JSON tělo `{ title: string, html: string }`
   - validace: `title` neprázdný string, `html` neprázdný string, limit velikosti
     těla (návrh 2 MB — dostatečné pro statický report, `express.json({limit:'2mb'})`
@@ -86,7 +88,7 @@ filosofie jako `mediaIndex.js` u fotek — samoopravitelné, nikdy nespadne serv
   - zápis HTML do `MY_FILES_DIR`, update `manifest.json` (upsert podle
     `slug`+datum, ne append duplicitně)
   - odpověď: `{ slug, filename, url: "/my-files/<filename>", publishedAt }`
-- [ ] `handleMyFilesList(req, res)` (veřejné, BEZ tokenu):
+- [x] `handleMyFilesList(req, res)` (veřejné, BEZ tokenu):
   - `GET /my-files/` — přečte manifest, vyrenderuje jednoduchou HTML stránku
     se seznamem odkazů (název, datum), styl podle dnešní `index.astro`
     (nadpis, `<ul>` odkazů, `target="_blank"`) — žádný nový vizuální jazyk
@@ -95,10 +97,10 @@ filosofie jako `mediaIndex.js` u fotek — samoopravitelné, nikdy nespadne serv
 
 ## Úkol 3 — zapojení do `server.js`
 
-- [ ] `adminRouter.post('/my-files', express.json({ limit: '2mb' }), handleMyFilesUpload)`
-- [ ] `app.get('/my-files/', handleMyFilesList)` — **před** finálním
+- [x] `adminRouter.post('/my-files', express.json({ limit: '2mb' }), handleMyFilesUpload)`
+- [x] `app.get('/my-files/', handleMyFilesList)` — **před** finálním
       `express.static(distDir, …)` fallbackem, jinak by ho přebil starý build
-- [ ] `app.use('/my-files', express.static(MY_FILES_DIR, { setHeaders(res) { res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate'); } }))`
+- [x] `app.use('/my-files', express.static(MY_FILES_DIR, { setHeaders(res) { res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate'); } }))`
       — servíruje jednotlivé publikované soubory přímo z disku; umístit
       **před** finální `express.static(distDir, …)`, ale jako static
       middleware bez nálezu souboru sám zavolá `next()`, takže existující
@@ -117,54 +119,60 @@ filosofie jako `mediaIndex.js` u fotek — samoopravitelné, nikdy nespadne serv
 
 `server/__tests__/myFiles.test.js`, po vzoru existujících testů
 (`upload.test.js`-style, `adminReport.test.js`):
-- [ ] upload bez tokenu → 401
-- [ ] upload s tokenem, platný `title`/`html` → 200, soubor na disku existuje,
+- [x] upload bez tokenu → 401
+- [x] upload s tokenem, platný `title`/`html` → 200, soubor na disku existuje,
       manifest obsahuje záznam
-- [ ] druhý upload se stejným title/den → přepíše, manifest nemá duplicitu
-- [ ] upload s prázdným `title` nebo `html` → 400
-- [ ] `GET /my-files/` bez tokenu → 200, obsahuje odkazy z manifestu
-- [ ] `GET /my-files/` s prázdným manifestem → 200, klidná věta, ne pád
+- [x] druhý upload se stejným title/den → přepíše, manifest nemá duplicitu
+- [x] upload s prázdným `title` nebo `html` → 400
+- [x] `GET /my-files/` bez tokenu → 200, obsahuje odkazy z manifestu
+- [x] `GET /my-files/` s prázdným manifestem → 200, klidná věta, ne pád
 
 ## Úkol 6 — quality gate a nasazení
 
 Podle `AGENTS.md`:
-- [ ] `npm test` bez chyby
-- [ ] `npm run build` bez chyby
-- [ ] `npm run check:links` nenajde rozbitý odkaz
-- [ ] náhledová URL (Railway PR preview) otevřená a ověřená — ručně zavolat
+- [x] `npm test` bez chyby (52/55 zelených, 3 selhání pre-existující/nesouvisející — chybí lokální fixture fotky)
+- [x] `npm run build` bez chyby
+- [x] `npm run check:links` nenajde rozbitý odkaz
+- [x] náhledová URL (Railway PR preview) otevřená a ověřená — ručně zavolat
       nový endpoint (curl s testovacím tokenem) a zkontrolovat, že se soubor
       objeví na `/my-files/`
-- [ ] PR, Michalovo review, merge → produkce (`new.michalhartman.com`)
+- [ ] PR [#47](https://github.com/harmirapra/michalhartman-web/pull/47) otevřený, CI+preview zelené — **čeká na Michalovo review a merge**
 
 ## Úkol 7 — PACT skill `1_Agents/skills/my-files-publish/`
 
 `SKILL.md`:
-- [ ] Frontmatter `name: my-files-publish`, popis s trigger frázemi „dej mi to
+- [x] Frontmatter `name: my-files-publish`, popis s trigger frázemi „dej mi to
       na web", „hoď mi to na web", „publikuj [soubor] na my-files"
-- [ ] Vstup: cesta k lokálnímu `.html` souboru + název (title)
-- [ ] Postup:
+- [x] Vstup: cesta k lokálnímu `.html` souboru + název (title)
+- [x] Postup:
   1. Získat `ADMIN_TOKEN`: primárně `railway variables --json` (Railway CLI je
      na tomhle Macu autentizované, ověřeno 30.8. u `railway deployment list`)
      ve složce `/Users/michalhartman/Projects/michalhartman-web`; fallback
      na `ADMIN_TOKEN` z `.env` tam, pokud existuje. **Token se nikdy netiskne
      do výstupu ani logu, nikdy se neukládá do PACT repa.**
-  2. `curl -sS -X POST https://new.michalhartman.com/admin/my-files -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" --data-binary @<tmp.json>`
+  2. `curl -sS -X POST https://<doména>/admin/my-files -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" --data-binary @<tmp.json>`
+     — **implementace jde dál**: doména se zjišťuje dynamicky přes
+     `railway variables --json` (`RAILWAY_PUBLIC_DOMAIN`), ne natvrdo
+     `new.michalhartman.com` — ten mezitím (mezi plánem a implementací)
+     přestal být produkční doménou, produkce je teď `michalhartman.com`.
      (tělo poskládané z title + obsahu souboru, bezpečně escapované —
      `jq -n --arg title "$T" --rawfile html "$SOUBOR" '{title:$title, html:$html}'`,
      ne ruční skládání JSON stringu)
   3. Z odpovědi přečíst `url`, vrátit uživateli plnou adresu
-     (`https://new.michalhartman.com<url>`)
-- [ ] Skript `scripts/publish.sh` uvnitř skillu (samostatný, nezávislý na
+     (`https://<doména>` + `url`)
+- [x] Skript `scripts/publish.sh` uvnitř skillu (samostatný, nezávislý na
       `michalhartman-web/scripts/`), čistě bash+curl+jq, žádné nové závislosti
-- [ ] Chybové stavy: chybí token (ani Railway CLI, ani `.env`) → jasná hláška,
+- [x] Chybové stavy: chybí token (ani Railway CLI, ani `.env`) → jasná hláška,
       neselhat potichu; server nedostupný / 401 / 429 (rate-limit z
       `adminAuth.js`) → hláška, ne retry loop
 
 ## Úkol 8 — ověření end-to-end
 
-- [ ] Skillem publikovat testovací soubor, Michal potvrdí v prohlížeči na
-      produkci
-- [ ] Ověřit, že opakovaná publikace se stejným title přepíše, ne duplikuje
+- [x] Skillem publikovat testovací soubor ověřeno na **Railway PR preview**
+      (`scripts/publish.sh` end-to-end, viz worklog) — **ověření na produkci
+      čeká na merge PR #47**
+- [x] Ověřit, že opakovaná publikace se stejným title přepíše, ne duplikuje
+      (ověřeno testy i ručně)
 
 ---
 
